@@ -258,6 +258,10 @@
     }
 
     function addToCart(productId) {
+        console.log('products:', products);
+  console.log('productId:', productId);
+  const prod = products.find(p => p.id == productId);
+  console.log('prod:', prod);
         const prod = products.find(p => p.id == productId);
       if (!prod || prod.stock <= 0) {
         alert("Hết hàng!");
