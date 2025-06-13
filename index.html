@@ -14,14 +14,23 @@
 <body>
   <h1>Shop Online Xu</h1>
 
-  <div id="user-section">
-    <h2>Đăng ký / Đăng nhập</h2>
-    <input id="username" placeholder="Username">
-    <input id="password" type="password" placeholder="Password">
-    <button onclick="register()">Đăng ký</button>
-    <button onclick="login()">Đăng nhập</button>
-    <div id="user-info"></div>
-  </div>
+<div id="login-form">
+  <h2>Đăng nhập</h2>
+  <input id="login-username" placeholder="Username">
+  <input id="login-password" type="password" placeholder="Password">
+  <button onclick="login()">Đăng nhập</button>
+  <p>Chưa có tài khoản? <a href="#" onclick="showRegisterForm();return false;">Đăng ký</a></p>
+  <div id="login-error" style="color:red;"></div>
+</div>
+<div id="register-form" style="display:none">
+  <h2>Đăng ký</h2>
+  <input id="register-username" placeholder="Username">
+  <input id="register-password" type="password" placeholder="Password">
+  <button onclick="register()">Đăng ký</button>
+  <p>Đã có tài khoản? <a href="#" onclick="showLoginForm();return false;">Đăng nhập</a></p>
+  <div id="register-error" style="color:red;"></div>
+</div>
+<div id="user-info"></div>
 
   <h2>Sản phẩm</h2>
   <div id="products"></div>
@@ -44,35 +53,45 @@
     let currentUser = null;
     let isAdmin = false;
 
-    // Đăng ký user
-    async function register() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      if (!username || !password) return alert("Điền đầy đủ thông tin");
-      // Kiểm tra username tồn tại
-      const { data: exist } = await supabase.from('users').select('id').eq('username', username).maybeSingle();
-      if (exist) { alert("Username đã tồn tại!"); return; }
-      const { data, error } = await supabase.from('users').insert([{ username, password, coins: 100 }]);
-      if (error) alert("Lỗi: " + error.message);
-      else alert("Đăng ký thành công! Bạn đã có 100 xu.");
-    }
+// Đăng ký user
+async function register() {
+  const username = document.getElementById('register-username').value.trim();
+  const password = document.getElementById('register-password').value.trim();
+  if (!username || !password) {
+    document.getElementById('register-error').innerText = "Điền đầy đủ thông tin";
+    return;
+  }
+  const { data: exist } = await supabase.from('users').select('id').eq('username', username).maybeSingle();
+  if (exist) {
+    document.getElementById('register-error').innerText = "Username đã tồn tại!";
+    return;
+  }
+  const { data, error } = await supabase.from('users').insert([{ username, password, coins: 100 }]);
+  if (error) document.getElementById('register-error').innerText = "Lỗi: " + error.message;
+  else {
+    alert("Đăng ký thành công! Bạn đã có 100 xu.");
+    showLoginForm();
+  }
+}
 
-    // Đăng nhập
-    async function login() {
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value.trim();
+// Đăng nhập
+async function login() {
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value.trim();
   const { data: user } = await supabase.from('users').select('*').eq('username', username).eq('password', password).maybeSingle();
-  if (!user) { alert("Sai thông tin!"); return; }
+  if (!user) {
+    document.getElementById('login-error').innerText = "Sai thông tin!";
+    return;
+  }
   currentUser = user;
   isAdmin = (username === "admin");
-  document.getElementById('user-info').innerHTML = `
-    Đã đăng nhập: <b>${user.username}</b> | Xu: ${user.coins}
-    <button onclick="logout()">Đăng xuất</button>
-  `;
+  document.getElementById('user-info').innerHTML = `Đã đăng nhập: <b>${user.username}</b> | Xu: ${user.coins} <button onclick="logout()">Đăng xuất</button>`;
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'none';
+  document.getElementById('login-error').innerText = '';
+  document.getElementById('register-error').innerText = '';
   if (isAdmin) document.getElementById('admin-section').style.display = 'block';
   else document.getElementById('admin-section').style.display = 'none';
-  document.getElementById('user-section').style.display = 'none'; // Ẩn form đăng nhập
-  document.getElementById('products').style.display = 'block';   // Hiện sản phẩm
   alert("Đăng nhập thành công! Chào mừng " + user.username);
   loadProducts();
   if (isAdmin) loadOrders();
@@ -87,6 +106,16 @@ function logout() {
   document.getElementById('products').style.display = 'block';
   loadProducts();
   document.getElementById('orders').innerHTML = '';
+  document.getElementById('login-form').style.display = 'block';
+document.getElementById('register-form').style.display = 'none';
+}
+    function showRegisterForm() {
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'block';
+}
+function showLoginForm() {
+  document.getElementById('register-form').style.display = 'none';
+  document.getElementById('login-form').style.display = 'block';
 }
     // Hiển thị sản phẩm
     async function loadProducts() {
