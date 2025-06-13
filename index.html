@@ -59,31 +59,35 @@
 
     // Đăng nhập
     async function login() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      const { data: user } = await supabase.from('users').select('*').eq('username', username).eq('password', password).maybeSingle();
-      if (!user) { alert("Sai thông tin!"); return; }
-      currentUser = user;
-      isAdmin = (username === "admin"); // Đặt "admin" là tài khoản admin
-      document.getElementById('user-info').innerHTML = `
-        Đã đăng nhập: <b>${user.username}</b> | Xu: ${user.coins}
-        <button onclick="logout()">Đăng xuất</button>
-      `;
-      if (isAdmin) document.getElementById('admin-section').style.display = 'block';
-      else document.getElementById('admin-section').style.display = 'none';
-      loadProducts();
-      if (isAdmin) loadOrders();
-    }
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const { data: user } = await supabase.from('users').select('*').eq('username', username).eq('password', password).maybeSingle();
+  if (!user) { alert("Sai thông tin!"); return; }
+  currentUser = user;
+  isAdmin = (username === "admin");
+  document.getElementById('user-info').innerHTML = `
+    Đã đăng nhập: <b>${user.username}</b> | Xu: ${user.coins}
+    <button onclick="logout()">Đăng xuất</button>
+  `;
+  if (isAdmin) document.getElementById('admin-section').style.display = 'block';
+  else document.getElementById('admin-section').style.display = 'none';
+  document.getElementById('user-section').style.display = 'none'; // Ẩn form đăng nhập
+  document.getElementById('products').style.display = 'block';   // Hiện sản phẩm
+  alert("Đăng nhập thành công! Chào mừng " + user.username);
+  loadProducts();
+  if (isAdmin) loadOrders();
+}
 
-    function logout() {
-      currentUser = null;
-      isAdmin = false;
-      document.getElementById('user-info').innerHTML = '';
-      document.getElementById('admin-section').style.display = 'none';
-      loadProducts();
-      document.getElementById('orders').innerHTML = '';
-    }
-
+function logout() {
+  currentUser = null;
+  isAdmin = false;
+  document.getElementById('user-info').innerHTML = '';
+  document.getElementById('admin-section').style.display = 'none';
+  document.getElementById('user-section').style.display = 'block'; // Hiện lại form đăng nhập
+  document.getElementById('products').style.display = 'block';
+  loadProducts();
+  document.getElementById('orders').innerHTML = '';
+}
     // Hiển thị sản phẩm
     async function loadProducts() {
       const { data: products } = await supabase.from('products').select('*');
