@@ -239,7 +239,7 @@
             <div class="product-price">${p.price} Xu</div>
             ${stockText}
             <div style="font-size:13px; color:#666;margin-bottom:6px">${p.description}</div>
-            <button class="add-cart-btn" onclick="addToCart(${p.id})" ${btnDisabled}>${p.stock > 0 ? 'Thêm vào giỏ' : 'Hết hàng'}</button>
+           <button class="add-cart-btn" onclick="addToCart('${p.id}')" ${btnDisabled}>${p.stock > 0 ? 'Thêm vào giỏ' : 'Hết hàng'}</button>
           </div>
         `;
       });
