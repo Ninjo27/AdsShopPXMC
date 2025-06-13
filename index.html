@@ -345,41 +345,28 @@
         sum += prod.price * item.qty;
       }
       if (freshUser.balance < sum) {
-  document.getElementById('cart-msg').textContent = 'Không đủ Xu để thanh toán!';
-  return;
-}
-
-// 1. Cập nhật tồn kho
-for (let item of cart) {
-  let prod = products.find(p => p.id === item.id);
-  await supabase.from('products').update({ stock: prod.stock - item.qty }).eq('id', prod.id);
-}
-
-// 2. Trừ xu của user
-await supabase.from('users').update({ balance: freshUser.balance - sum }).eq('id', user.id);
-
-// 3. Ghi đơn hàng mới lên Supabase
-const { error } = await supabase.from('orders').insert([{
-  username: user.username,
-  items: cart, // Nếu cột items là text thì dùng JSON.stringify(cart)
-  total: sum,
-  time: new Date().toLocaleString(),
-  delivered: false
-}]);
-if (error) {
-  alert("Lỗi ghi đơn hàng: " + error.message);
-  return;
-}
-
-// 4. Xử lý tiếp
-sessionStorage.removeItem('cart_' + user.username);
-document.getElementById('cart-msg').style.color = "#388e3c";
-document.getElementById('cart-msg').textContent = 'Thanh toán thành công! Cảm ơn bạn đã mua hàng.';
-setTimeout(() => {
-  document.getElementById('cart-msg').textContent = '';
-  document.getElementById('cart-msg').style.color = '#d32f2f';
-}, 3000);
-await loadAll();
+        document.getElementById('cart-msg').textContent = 'Không đủ Xu để thanh toán!';
+        return;
+      }
+      // Trừ tồn kho, cập nhật xu
+      for (let item of cart) {
+        let prod = products.find(p => p.id === item.id);
+        await supabase.from('products').update({ stock: prod.stock - item.qty }).eq('id', prod.id);
+      }
+      await supabase.from('users').update({ balance: freshUser.balance - sum }).eq('id', user.id);
+      await supabase.from('orders').insert([{
+        username: user.username,
+        items: cart,
+        total: sum,
+        time: new Date().toLocaleString(),
+        delivered: false
+      }]);
+      sessionStorage.removeItem('cart_' + user.username);
+      document.getElementById('cart-msg').style.color = "#388e3c";
+      document.getElementById('cart-msg').textContent = 'Thanh toán thành công! Cảm ơn bạn đã mua hàng.';
+      setTimeout(()=>{document.getElementById('cart-msg').textContent='';document.getElementById('cart-msg').style.color='#d32f2f';},3000);
+      await loadAll();
+    }
 
     // Hiển thị số dư và tên user
     async function renderBalance() {
@@ -504,28 +491,23 @@ await loadAll();
 
     // ADMIN: Xem đơn hàng
     async function renderOrdersSection() {
-        const user = getCurrentUser();
-  if (!user || user.username !== 'admin') {
-    document.getElementById('orders-section').style.display = 'none';
-    return;
-  }
-  document.getElementById('orders-section').style.display = 'block';
-  let { data: orders } = await supabase.from('orders').select('*');
-  let newOrdersCount = orders.filter(order => !order.delivered).length;
-  let table = document.getElementById('orders-table');
-  // Thêm dòng thông báo ở trên cùng bảng
-  table.innerHTML = `<tr><td colspan="6" style="color:orange;font-weight:bold;text-align:left">
-    Có ${newOrdersCount} đơn hàng mới chưa giao!
-    </td></tr>
-    <tr>
-      <th>Người mua</th>
-      <th>Sản phẩm</th>
-      <th>Tổng Xu</th>
-      <th>Thời gian</th>
-      <th>Trạng thái</th>
-      <th>Đánh dấu đã giao</th>
-    </tr>`;
-  orders.forEach((order, idx) => {
+      const user = getCurrentUser();
+      if (!user || user.username !== 'admin') {
+        document.getElementById('orders-section').style.display = 'none';
+        return;
+      }
+      document.getElementById('orders-section').style.display = 'block';
+      let { data: orders } = await supabase.from('orders').select('*');
+      let table = document.getElementById('orders-table');
+      table.innerHTML = `<tr>
+        <th>Người mua</th>
+        <th>Sản phẩm</th>
+        <th>Tổng Xu</th>
+        <th>Thời gian</th>
+        <th>Trạng thái</th>
+        <th>Đánh dấu đã giao</th>
+      </tr>`;
+      orders.forEach((order, idx) => {
         let items;
         try {
           items = (typeof order.items === 'string') ? JSON.parse(order.items) : order.items;
