@@ -1,1 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Shop Online Xu</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: Arial; margin: 30px; }
+    table, th, td { border: 1px solid #ccc; border-collapse: collapse; padding: 8px; }
+    .admin { background: #f6f6f6; margin-top: 40px; padding: 20px; }
+    img { max-width: 80px; }
+  </style>
+</head>
+<body>
+  <h1>Shop Online Xu</h1>
 
+  <div id="user-section">
+    <h2>Đăng ký / Đăng nhập</h2>
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="register()">Đăng ký</button>
+    <button onclick="login()">Đăng nhập</button>
+    <div id="user-info"></div>
+  </div>
+
+  <h2>Sản phẩm</h2>
+  <div id="products"></div>
+
+  <div class="admin" id="admin-section" style="display:none">
+    <h2>Admin: Quản lý đơn hàng</h2>
+    <div id="orders"></div>
+    <h3>Cộng xu cho user</h3>
+    <input id="coin_user" placeholder="Username">
+    <input id="coin_amount" type="number" placeholder="Số xu cộng">
+    <button onclick="addCoins()">Cộng xu</button>
+    <div id="coin-result"></div>
+  </div>
+
+  <script>
+    // Thay YOUR_SUPABASE_URL và YOUR_SUPABASE_ANON_KEY bằng thông tin thực tế của bạn
+    const supabaseUrl = 'https://ibylievcmlzzyzkihzfo.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieWxpZXZjbWx6enl6a2loemZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3OTQ4OTYsImV4cCI6MjA2NTM3MDg5Nn0.iJNGvjly4q5M43Xd5uJ8A0OZT7PSrbQWcuhas9WWEiM';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    let currentUser = null;
+    let isAdmin = false;
+
+    // Đăng ký user
+    async function register() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      if (!username || !password) return alert("Điền đầy đủ thông tin");
+      // Kiểm tra username tồn tại
+      const { data: exist } = await supabase.from('users').select('id').eq('username', username).maybeSingle();
+      if (exist) { alert("Username đã tồn tại!"); return; }
+      const { data, error } = await supabase.from('users').insert([{ username, password, coins: 100 }]);
+      if (error) alert("Lỗi: " + error.message);
+      else alert("Đăng ký thành công! Bạn đã có 100 xu.");
+    }
+
+    // Đăng nhập
+    async function login() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const { data: user } = await supabase.from('users').select('*').eq('username', username).eq('password', password).maybeSingle();
+      if (!user) { alert("Sai thông tin!"); return; }
+      currentUser = user;
+      isAdmin = (username === "admin"); // Đặt "admin" là tài khoản admin
+      document.getElementById('user-info').innerHTML = `
+        Đã đăng nhập: <b>${user.username}</b> | Xu: ${user.coins}
+        <button onclick="logout()">Đăng xuất</button>
+      `;
+      if (isAdmin) document.getElementById('admin-section').style.display = 'block';
+      else document.getElementById('admin-section').style.display = 'none';
+      loadProducts();
+      if (isAdmin) loadOrders();
+    }
+
+    function logout() {
+      currentUser = null;
+      isAdmin = false;
+      document.getElementById('user-info').innerHTML = '';
+      document.getElementById('admin-section').style.display = 'none';
+      loadProducts();
+      document.getElementById('orders').innerHTML = '';
+    }
+
+    // Hiển thị sản phẩm
+    async function loadProducts() {
+      const { data: products } = await supabase.from('products').select('*');
+      let html = '<table><tr><th>Ảnh</th><th>Tên</th><th>Giá</th><th>Còn</th><th>Mô tả</th><th>Mua</th></tr>';
+      products.forEach(p => {
+        html += `<tr>
+          <td><img src="${p.image_url}" alt=""></td>
+          <td>${p.name}</td>
+          <td>${p.price}</td>
+          <td>${p.stock}</td>
+          <td>${p.description}</td>
+          <td>
+            <button onclick="buyProduct('${p.id}')" ${!currentUser||p.stock==0?'disabled':''}>Mua</button>
+          </td>
+        </tr>`;
+      });
+      html += '</table>';
+      document.getElementById('products').innerHTML = html;
+    }
+    loadProducts();
+
+    // Mua sản phẩm
+    async function buyProduct(productId) {
+      if (!currentUser) return alert("Đăng nhập trước khi mua!");
+      const { data: product } = await supabase.from('products').select('*').eq('id', productId).maybeSingle();
+      if (!product) return alert("Sản phẩm không tồn tại!");
+      if (product.stock < 1) return alert("Hết hàng!");
+      if (currentUser.coins < product.price) return alert("Không đủ xu!");
+      // Trừ xu và số lượng
+      await supabase.from('users').update({ coins: currentUser.coins - product.price }).eq('id', currentUser.id);
+      await supabase.from('products').update({ stock: product.stock - 1 }).eq('id', productId);
+      // Tạo đơn hàng
+      await supabase.from('orders').insert([{
+        user_id: currentUser.id,
+        product_id: product.id,
+        quantity: 1,
+        total: product.price,
+        status: 'pending'
+      }]);
+      alert("Đặt hàng thành công, chờ admin xác nhận!");
+      // Refresh coins và sản phẩm
+      const { data: user } = await supabase.from('users').select('*').eq('id', currentUser.id).maybeSingle();
+      currentUser = user;
+      document.getElementById('user-info').innerHTML = `Đã đăng nhập: <b>${user.username}</b> | Xu: ${user.coins} <button onclick="logout()">Đăng xuất</button>`;
+      loadProducts();
+      if (isAdmin) loadOrders();
+    }
+
+    // ADMIN: Xem đơn hàng pending
+    async function loadOrders() {
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('id,quantity,total,status,created_at,users(username),products(name)')
+        .eq('status', 'pending');
+      let html = '<table><tr><th>ID</th><th>Khách</th><th>Sản phẩm</th><th>Số lượng</th><th>Tổng xu</th><th>Ngày</th><th>Hành động</th></tr>';
+      orders.forEach(o => {
+        html += `<tr>
+          <td>${o.id}</td>
+          <td>${o.users.username}</td>
+          <td>${o.products.name}</td>
+          <td>${o.quantity}</td>
+          <td>${o.total}</td>
+          <td>${o.created_at.split('T')[0]}</td>
+          <td><button onclick="markOrderDelivered('${o.id}')">Đã giao</button></td>
+        </tr>`;
+      });
+      html += '</table>';
+      document.getElementById('orders').innerHTML = html;
+    }
+
+    // ADMIN: Xác nhận giao hàng
+    async function markOrderDelivered(order_id) {
+      await supabase.from('orders').update({ status: 'delivered' }).eq('id', order_id);
+      alert("Đã xác nhận giao hàng!");
+      loadOrders();
+    }
+
+    // ADMIN: Cộng xu cho user
+    async function addCoins() {
+      const user = document.getElementById('coin_user').value.trim();
+      const coins = parseInt(document.getElementById('coin_amount').value);
+      if (!user || isNaN(coins)) return alert("Điền đầy đủ thông tin!");
+      const { data: u } = await supabase.from('users').select('*').eq('username', user).maybeSingle();
+      if (!u) return document.getElementById('coin-result').innerText = "Không tìm thấy user!";
+      await supabase.from('users').update({ coins: u.coins + coins }).eq('id', u.id);
+      document.getElementById('coin-result').innerText = `Đã cộng ${coins} xu cho ${user}!`;
+      if (currentUser && currentUser.username === user) {
+        const { data: userNew } = await supabase.from('users').select('*').eq('id', currentUser.id).maybeSingle();
+        currentUser = userNew;
+        document.getElementById('user-info').innerHTML = `Đã đăng nhập: <b>${userNew.username}</b> | Xu: ${userNew.coins} <button onclick="logout()">Đăng xuất</button>`;
+      }
+    }
+
+  </script>
+</body>
+</html>
