@@ -167,6 +167,7 @@
       </table>
     </div>
     <audio id="checkout-sound" src="audio/moneycash.mp3"></audio>
+    <audio id="bg-music" src="" loop autoplay style="display:none"></audio>
   </div>
   <script>
     // Cấu hình Supabase
@@ -717,7 +718,30 @@ function initDoubleCasino() {
   renderDoubleGameUI();
   renderDoubleHistory();
 }
+// Danh sách các file nhạc nền
+const bgMusics = [
+  "audio/Fade.mp3",
+  "audio/FlyAway.mp3",
+  "audio/Dancin.mp3",
+  "audio/Mortals.mp3",
+  "audio/Royalty.mp3"
+];
 
+// Phát nhạc nền ngẫu nhiên khi vào site
+function playRandomBgMusic() {
+  const audio = document.getElementById('bg-music');
+  const randIndex = Math.floor(Math.random() * bgMusics.length);
+  audio.src = bgMusics[randIndex];
+  // Nếu đã có user interaction, tự động play
+  audio.currentTime = 0;
+  audio.volume = 0.5; // Tùy chỉnh âm lượng
+  audio.play().catch(() => {
+    // Một số trình duyệt cần tương tác mới play, bạn có thể hướng dẫn user bấm đâu đó để play
+  });
+}
+
+// Gọi khi load site
+playRandomBgMusic();
   </script>
 </body>
 </html>
