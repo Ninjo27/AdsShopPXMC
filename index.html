@@ -580,14 +580,15 @@
       await renderStockSection();
       await renderOrdersSection();
       await renderSpecialLinkBtn();
+      await renderDoubleHistory();
+initDoubleStreak();
       if (sessionStorage.getItem('showRulesModal') === '1' && !sessionStorage.getItem('rulesModalSeen')) {
         showRulesModal();
         sessionStorage.removeItem('showRulesModal');
       }
       sessionStorage.removeItem('rulesModalSeen');
     }
-    await renderDoubleHistory();
-initDoubleStreak();
+
     loadAll();
 
     function showRulesModal() {
