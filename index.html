@@ -87,6 +87,13 @@
     </div>
     <div id="shop-section" style="display:none;">
       <h2>Sản phẩm nổi bật</h2>
+      <div id="category-filter" style="margin-bottom:20px; text-align:center;">
+  <button onclick="filterCategory('all')" style="margin-right:10px;">Tất cả</button>
+  <button onclick="filterCategory('thuc-an')" style="margin-right:10px;">Thức ăn</button>
+  <button onclick="filterCategory('trang-bi')" style="margin-right:10px;">Trang bị</button>
+  <button onclick="filterCategory('vat-pham')" style="margin-right:10px;">Vật phẩm</button>
+  <!-- Thêm nút cho các danh mục khác nếu muốn -->
+</div>
       <div class="products" id="products-list"></div>
       <div class="cart">
         <h2>Giỏ hàng</h2>
@@ -244,27 +251,31 @@
     }
 
     async function renderProducts() {
-      await fetchProducts();
-      const list = document.getElementById('products-list');
-      list.innerHTML = '';
-      products.forEach(p => {
-        let stockText = p.stock > 0
-          ? `<span class="product-stock">Còn lại: ${p.stock}</span>`
-          : `<span class="out-of-stock">Hết hàng</span>`;
-        let btnDisabled = p.stock <= 0 ? 'disabled' : '';
-        list.innerHTML += `
-          <div class="product">
-            <img src="${p.image}" alt="${p.name}">
-            <div class="product-title">${p.name}</div>
-            <div class="product-price">${p.price} Xu</div>
-            ${stockText}
-            <div style="font-size:13px; color:#666;margin-bottom:6px">${p.description}</div>
-           <button class="add-cart-btn" onclick="addToCart('${p.id}')" ${btnDisabled}>${p.stock > 0 ? 'Thêm vào giỏ' : 'Hết hàng'}</button>
-          </div>
-        `;
-      });
-    }
+  await fetchProducts();
+  const list = document.getElementById('products-list');
+  list.innerHTML = '';
+  // Lọc sản phẩm theo category nếu không phải "all"
+  let filtered = selectedCategory === 'all'
+    ? products
+    : products.filter(p => (p.category || 'all') === selectedCategory);
 
+  filtered.forEach(p => {
+    let stockText = p.stock > 0
+      ? `<span class="product-stock">Còn lại: ${p.stock}</span>`
+      : `<span class="out-of-stock">Hết hàng</span>`;
+    let btnDisabled = p.stock <= 0 ? 'disabled' : '';
+    list.innerHTML += `
+      <div class="product">
+        <img src="${p.image}" alt="${p.name}">
+        <div class="product-title">${p.name}</div>
+        <div class="product-price">${p.price} Xu</div>
+        ${stockText}
+        <div style="font-size:13px; color:#666;margin-bottom:6px">${p.description}</div>
+        <button class="add-cart-btn" onclick="addToCart('${p.id}')" ${btnDisabled}>${p.stock > 0 ? 'Thêm vào giỏ' : 'Hết hàng'}</button>
+      </div>
+    `;
+  });
+}
     // Giỏ hàng (tạm thời lưu sessionStorage theo user)
     function getCart() {
       const user = getCurrentUser();
@@ -742,6 +753,12 @@ function playRandomBgMusic() {
 
 // Gọi khi load site
 playRandomBgMusic();
+    let selectedCategory = 'all';
+
+function filterCategory(cat) {
+  selectedCategory = cat;
+  renderProducts();
+}
   </script>
 </body>
 </html>
