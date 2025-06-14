@@ -34,23 +34,6 @@
   </style>
 </head>
 <body>
-<div id="main-layout" style="display:flex; min-height:100vh; display:none;">
-  <!-- Sidebar sẽ đặt ở đây -->
-  <nav id="sidebar" style="width:210px; background:#fffbe7; border-right:1px solid #f0e1c2; padding:36px 0 0 0; min-height:100vh;">
-    <div style="text-align:center; font-weight:bold; font-size:20px; color:#ff9800; margin-bottom:36px;">DANH MỤC</div>
-    <ul style="list-style:none; padding:0; margin:0;">
-      <li>
-        <button onclick="showSection('shop')" id="nav-shop" style="width:100%; background:none; border:none; text-align:left; font-size:17px; padding:14px 28px; color:#333; cursor:pointer;">🛒 Mua hàng</button>
-      </li>
-      <li>
-        <button onclick="showSection('casino')" id="nav-casino" style="width:100%; background:none; border:none; text-align:left; font-size:17px; padding:14px 28px; color:#333; cursor:pointer;">🎲 Casino</button>
-      </li>
-      <li>
-        <button onclick="showSection('admin')" id="nav-admin" style="width:100%; background:none; border:none; text-align:left; font-size:17px; padding:14px 28px; color:#333; cursor:pointer;">⚙️ Admin</button>
-      </li>
-    </ul>
-  </nav>
-  <div id="main-content" style="flex:1;">
 <!-- Modal hướng dẫn/thể lệ khi đăng nhập -->
 <div id="rules-modal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);z-index:10000;">
   <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fffbe7;padding:32px 32px 24px 32px;min-width:340px;max-width:94vw;border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,0.13);">
@@ -593,39 +576,22 @@
     // Khởi động trang
 async function loadAll() {
   let user = getCurrentUser();
-
-  // Ẩn hết các phần đặc biệt
-  document.getElementById('main-layout').style.display = 'none';
-  document.getElementById('login-section').style.display = 'none';
-  document.getElementById('register-section').style.display = 'none';
-
   if (!user) {
-    // Chưa đăng nhập: chỉ hiện đăng nhập, ẩn sidebar/layout
-    document.getElementById('main-layout').style.display = 'none';
+    document.getElementById('shop-section').style.display = 'none';
+    document.getElementById('user-section').style.display = 'none';
     document.getElementById('login-section').style.display = 'block';
-    document.getElementById('register-section').style.display = 'none';
+    document.getElementById('admin-section').style.display = 'none';
+    document.getElementById('stock-section').style.display = 'none';
+    document.getElementById('orders-section').style.display = 'none';
+    renderSpecialLinkBtn();
+    document.getElementById('double-section').style.display = 'none'; // <-- THÊM DÒNG NÀY!
     return;
   }
-
-  // Đã đăng nhập: hiện layout chính và sidebar
-  document.getElementById('main-layout').style.display = 'flex';
   document.getElementById('login-section').style.display = 'none';
   document.getElementById('register-section').style.display = 'none';
-
-  // Hiện/ẩn nút Admin trong sidebar
-  if (user.username !== 'admin') {
-    document.getElementById('nav-admin').style.display = 'none';
-  } else {
-    document.getElementById('nav-admin').style.display = '';
-  }
-
-  // Hiện user section và mặc định vào mục shop
+  document.getElementById('shop-section').style.display = 'block';
   document.getElementById('user-section').style.display = 'block';
-
-  // Hiện đúng các section: ẩn hết, chỉ hiện shop (hoặc mục cuối user chọn)
-  showSection('shop');
-
-  // Các hàm render dữ liệu
+  document.getElementById('double-section').style.display = 'block'; // <-- THÊM DÒNG NÀY!
   await renderBalance();
   await renderProducts();
   renderCart();
@@ -634,14 +600,13 @@ async function loadAll() {
   await renderOrdersSection();
   await renderSpecialLinkBtn();
   initDoubleCasino();
-
-  // Modal hướng dẫn sử dụng (nếu có)
   if (sessionStorage.getItem('showRulesModal') === '1' && !sessionStorage.getItem('rulesModalSeen')) {
     showRulesModal();
     sessionStorage.removeItem('showRulesModal');
   }
   sessionStorage.removeItem('rulesModalSeen');
 }
+    loadAll();
 
     function showRulesModal() {
       document.getElementById('rules-modal').style.display = 'block';
@@ -793,27 +758,6 @@ playRandomBgMusic();
 function filterCategory(cat) {
   selectedCategory = cat;
   renderProducts();
-}
-    function showSection(section) {
-  document.getElementById('shop-section').style.display = 'none';
-  document.getElementById('double-section').style.display = 'none';
-  document.getElementById('admin-section').style.display = 'none';
-  document.getElementById('stock-section').style.display = 'none';
-  document.getElementById('orders-section').style.display = 'none';
-  document.getElementById('speciallink-section').style.display = 'none';
-
-  if(section === 'shop') document.getElementById('shop-section').style.display = 'block';
-  if(section === 'casino') document.getElementById('double-section').style.display = 'block';
-  if(section === 'admin') {
-    document.getElementById('admin-section').style.display = 'block';
-    document.getElementById('stock-section').style.display = 'block';
-    document.getElementById('orders-section').style.display = 'block';
-    document.getElementById('speciallink-section').style.display = 'block';
-  }
-  ['shop','casino','admin'].forEach(k=>{
-    let el = document.getElementById('nav-'+k);
-    if(el) el.style.background = (section===k) ? '#ffe0b2' : 'none';
-  });
 }
   </script>
 </body>
