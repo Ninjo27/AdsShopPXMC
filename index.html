@@ -482,7 +482,7 @@
       let input = document.getElementById('stock-input-' + pid);
       let value = parseInt(input.value);
       if (isNaN(value) || value < 0) value = 0;
-      await supabase.from('products').update({ stock: value }).eq('id', pid);
+await supabase.from('products').update({ stock: value }).eq('id', Number(pid));
       document.getElementById('stock-now-' + pid).textContent = value;
       document.getElementById('stock-msg').textContent = "Đã cập nhật tồn kho!";
       renderProducts();
