@@ -109,7 +109,7 @@
         <div class="msg" id="cart-msg"></div>
       </div>
     </div>
-<div id="luckywheel-section" style="margin:40px auto 0 auto; max-width:420px; background:#fffbe7; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,0.07); padding:24px 15px;">
+<div id="luckywheel-section" style="display:none; margin:40px auto 0 auto; max-width:420px; background:#fffbe7; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,0.07); padding:24px 15px;">
   <h2 style="text-align:center; color:#e65100;">🎡 Vòng quay may mắn</h2>
   <div style="display:flex; gap:18px; justify-content:center; align-items:center;">
     <canvas id="luckywheel-canvas" width="220" height="220"></canvas>
@@ -553,36 +553,45 @@
       renderOrdersSection();
     }
 
-    // Khởi động trang
-    async function loadAll() {
-      let user = getCurrentUser();
-      if (!user) {
-        document.getElementById('shop-section').style.display = 'none';
-        document.getElementById('user-section').style.display = 'none';
-        document.getElementById('login-section').style.display = 'block';
-        document.getElementById('admin-section').style.display = 'none';
-        document.getElementById('stock-section').style.display = 'none';
-        document.getElementById('orders-section').style.display = 'none';
-        renderSpecialLinkBtn();
-        return;
-      }
-      document.getElementById('login-section').style.display = 'none';
-      document.getElementById('register-section').style.display = 'none';
-      document.getElementById('shop-section').style.display = 'block';
-      document.getElementById('user-section').style.display = 'block';
-      await renderBalance();
-      await renderProducts();
-      renderCart();
-      await renderAdminSection();
-      await renderStockSection();
-      await renderOrdersSection();
-      await renderSpecialLinkBtn();
-      if (sessionStorage.getItem('showRulesModal') === '1' && !sessionStorage.getItem('rulesModalSeen')) {
-        showRulesModal();
-        sessionStorage.removeItem('showRulesModal');
-      }
-      sessionStorage.removeItem('rulesModalSeen');
-    }
+// Khởi động trang
+async function loadAll() {
+  let user = getCurrentUser();
+
+  // Quản lý hiển thị vòng quay may mắn
+  document.getElementById('luckywheel-section').style.display = user ? 'block' : 'none';
+  if (user) {
+    await renderWheelHistory();
+  } else {
+    document.getElementById('wheel-history-list').innerHTML = '';
+  }
+
+  if (!user) {
+    document.getElementById('shop-section').style.display = 'none';
+    document.getElementById('user-section').style.display = 'none';
+    document.getElementById('login-section').style.display = 'block';
+    document.getElementById('admin-section').style.display = 'none';
+    document.getElementById('stock-section').style.display = 'none';
+    document.getElementById('orders-section').style.display = 'none';
+    renderSpecialLinkBtn();
+    return;
+  }
+  document.getElementById('login-section').style.display = 'none';
+  document.getElementById('register-section').style.display = 'none';
+  document.getElementById('shop-section').style.display = 'block';
+  document.getElementById('user-section').style.display = 'block';
+  await renderBalance();
+  await renderProducts();
+  renderCart();
+  await renderAdminSection();
+  await renderStockSection();
+  await renderOrdersSection();
+  await renderSpecialLinkBtn();
+  if (sessionStorage.getItem('showRulesModal') === '1' && !sessionStorage.getItem('rulesModalSeen')) {
+    showRulesModal();
+    sessionStorage.removeItem('showRulesModal');
+  }
+  sessionStorage.removeItem('rulesModalSeen');
+}
     await renderWheelHistory();
     loadAll();
 
