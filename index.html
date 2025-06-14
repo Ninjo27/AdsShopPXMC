@@ -166,6 +166,7 @@
         <tr><th>Người mua</th><th>Sản phẩm</th><th>Tổng Xu</th><th>Thời gian</th></tr>
       </table>
     </div>
+    <audio id="checkout-sound" src="audio/moneycash.mp3"></audio>
   </div>
   <script>
     // Cấu hình Supabase
@@ -382,6 +383,11 @@
       sessionStorage.removeItem('cart_' + user.username);
       document.getElementById('cart-msg').style.color = "#388e3c";
       document.getElementById('cart-msg').textContent = 'Thanh toán thành công! Cảm ơn bạn đã mua hàng.';
+      try {
+  var audio = document.getElementById('checkout-sound');
+  audio.currentTime = 0;
+  audio.play();
+} catch(e) {}
       setTimeout(()=>{document.getElementById('cart-msg').textContent='';document.getElementById('cart-msg').style.color='#d32f2f';},3000);
       await loadAll();
     }
