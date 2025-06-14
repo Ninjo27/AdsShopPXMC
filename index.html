@@ -768,13 +768,13 @@ function animateWheelSpin(idx) {
       }
       ctx.restore();
       // Kim chỉ
-      ctx.beginPath();
-      ctx.moveTo(110, 36);
-      ctx.lineTo(103, 50);
-      ctx.lineTo(117, 50);
-      ctx.closePath();
-      ctx.fillStyle="#d84315";
-      ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(110, 184);      // đỉnh mũi tên ở dưới cùng
+    ctx.lineTo(103, 170);
+    ctx.lineTo(117, 170);
+    ctx.closePath();
+    ctx.fillStyle="#d84315";
+    ctx.fill();
       // Animation
       if (angle < target) {
         angle += 0.32 - 0.25*(angle/target);
