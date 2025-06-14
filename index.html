@@ -699,7 +699,7 @@ async function spinLuckyWheel() {
   await supabase.from('wheel_history').insert([{
     username: user.username,
     reward: reward.label,
-    time: now,
+    time: new Date().toISOString(),
     lucky: reward.lucky,
     note: reward.lucky ? "Trúng thưởng" : "Không trúng"
   }]);
