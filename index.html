@@ -557,39 +557,39 @@
     }
 
     // Khởi động trang
-    async function loadAll() {
-      let user = getCurrentUser();
-      if (!user) {
-        document.getElementById('double-section').style.display = 'block';
-        document.getElementById('shop-section').style.display = 'none';
-        document.getElementById('user-section').style.display = 'none';
-        document.getElementById('login-section').style.display = 'block';
-        document.getElementById('admin-section').style.display = 'none';
-        document.getElementById('stock-section').style.display = 'none';
-        document.getElementById('orders-section').style.display = 'none';
-        renderSpecialLinkBtn();
-        return;
-      }
-      document.getElementById('login-section').style.display = 'none';
-      document.getElementById('register-section').style.display = 'none';
-      document.getElementById('shop-section').style.display = 'block';
-      document.getElementById('user-section').style.display = 'block';
-      await renderBalance();
-      await renderProducts();
-      renderCart();
-      await renderAdminSection();
-      await renderStockSection();
-      await renderOrdersSection();
-      await renderSpecialLinkBtn();
-      await renderDoubleHistory();
-initDoubleStreak();
-      if (sessionStorage.getItem('showRulesModal') === '1' && !sessionStorage.getItem('rulesModalSeen')) {
-        showRulesModal();
-        sessionStorage.removeItem('showRulesModal');
-      }
-      sessionStorage.removeItem('rulesModalSeen');
-    }
-
+async function loadAll() {
+  let user = getCurrentUser();
+  if (!user) {
+    document.getElementById('shop-section').style.display = 'none';
+    document.getElementById('user-section').style.display = 'none';
+    document.getElementById('login-section').style.display = 'block';
+    document.getElementById('admin-section').style.display = 'none';
+    document.getElementById('stock-section').style.display = 'none';
+    document.getElementById('orders-section').style.display = 'none';
+    renderSpecialLinkBtn();
+    document.getElementById('double-section').style.display = 'none'; // <-- THÊM DÒNG NÀY!
+    return;
+  }
+  document.getElementById('login-section').style.display = 'none';
+  document.getElementById('register-section').style.display = 'none';
+  document.getElementById('shop-section').style.display = 'block';
+  document.getElementById('user-section').style.display = 'block';
+  document.getElementById('double-section').style.display = 'block'; // <-- THÊM DÒNG NÀY!
+  await renderBalance();
+  await renderProducts();
+  renderCart();
+  await renderAdminSection();
+  await renderStockSection();
+  await renderOrdersSection();
+  await renderSpecialLinkBtn();
+  await renderDoubleHistory();
+  initDoubleStreak();
+  if (sessionStorage.getItem('showRulesModal') === '1' && !sessionStorage.getItem('rulesModalSeen')) {
+    showRulesModal();
+    sessionStorage.removeItem('showRulesModal');
+  }
+  sessionStorage.removeItem('rulesModalSeen');
+}
     loadAll();
 
     function showRulesModal() {
