@@ -109,21 +109,24 @@
         <div class="msg" id="cart-msg"></div>
       </div>
     </div>
-<div id="luckywheel-section" style="display:none; margin:40px auto 0 auto; max-width:420px; background:#fffbe7; border-radius:14px; box-shadow:0 2px 10px rgba(0,0,0,0.07); padding:24px 15px;">
-  <h2 style="text-align:center; color:#e65100;">🎡 Vòng quay may mắn</h2>
-  <div style="display:flex; gap:18px; justify-content:center; align-items:center;">
-    <canvas id="luckywheel-canvas" width="220" height="220"></canvas>
-    <div style="flex:1;">
-      <div style="font-size:15px; color:#333; margin-bottom:7px;">Tỉ lệ phần thưởng:</div>
-      <ul id="wheel-rate-list" style="font-size:14px; color:#555; margin-top:0; margin-bottom:12px; padding-left:22px;"></ul>
-      <div style="font-size:13px; color:#c62828;">Mỗi lần quay: <b>5 Xu</b></div>
-      <button id="spin-btn" onclick="spinLuckyWheel()" style="margin-top:12px; background:#ff9800; color:#fff; border:none; border-radius:6px; padding:9px 30px; font-size:16px; cursor:pointer;">Quay Ngay!</button>
-      <div class="msg" id="wheel-msg"></div>
+<!-- Double or Nothing Game -->
+<div id="double-section" style="margin:40px auto 0 auto; max-width:420px; background:#fffbe7; border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,0.07); padding:24px 15px;">
+  <h2 style="text-align:center; color:#e65100;">🎲 Nhân đôi hoặc mất tất cả</h2>
+  <div style="text-align:center;">
+    <div style="font-size:15px; color:#333; margin-bottom:7px;">
+      Đặt cược <b>4 xu</b> để thử <b>nhân đôi hoặc mất trắng</b>!<br>
+      Tỷ lệ thắng: <b>40%</b> | Tỷ lệ thua: <b>60%</b>
     </div>
+    <div style="margin:10px 0;">
+      Số lần nhân đôi liên tiếp: <span id="double-streak">0</span> / 10
+    </div>
+    <button id="double-btn" onclick="playDoubleOrNothing()" style="margin-top:12px; background:#ff9800; color:#fff; border:none; border-radius:6px; padding:9px 30px; font-size:16px; cursor:pointer;">Chơi Ngay!</button>
+    <button id="double-reset-btn" onclick="resetDoubleStreak()" style="display:none;margin-left:10px;">Bắt đầu lại</button>
+    <div class="msg" id="double-msg"></div>
   </div>
   <div style="margin-top:18px;">
-    <h4>Lịch sử quay của bạn:</h4>
-    <ul id="wheel-history-list" style="font-size:14px; color:#444; min-height:48px;"></ul>
+    <h4>Lịch sử chơi:</h4>
+    <ul id="double-history-list" style="font-size:14px; color:#444; min-height:48px;"></ul>
   </div>
 </div>
     <!-- Admin: Cấp xu cho user -->
@@ -553,46 +556,38 @@
       renderOrdersSection();
     }
 
-// Khởi động trang
-async function loadAll() {
-  let user = getCurrentUser();
-
-  // Quản lý hiển thị vòng quay may mắn
-  document.getElementById('luckywheel-section').style.display = user ? 'block' : 'none';
-  if (user) {
-    await renderWheelHistory();
-  } else {
-    document.getElementById('wheel-history-list').innerHTML = '';
-  }
-
-  if (!user) {
-    document.getElementById('shop-section').style.display = 'none';
-    document.getElementById('user-section').style.display = 'none';
-    document.getElementById('login-section').style.display = 'block';
-    document.getElementById('admin-section').style.display = 'none';
-    document.getElementById('stock-section').style.display = 'none';
-    document.getElementById('orders-section').style.display = 'none';
-    renderSpecialLinkBtn();
-    return;
-  }
-  document.getElementById('login-section').style.display = 'none';
-  document.getElementById('register-section').style.display = 'none';
-  document.getElementById('shop-section').style.display = 'block';
-  document.getElementById('user-section').style.display = 'block';
-  await renderBalance();
-  await renderProducts();
-  renderCart();
-  await renderAdminSection();
-  await renderStockSection();
-  await renderOrdersSection();
-  await renderSpecialLinkBtn();
-  if (sessionStorage.getItem('showRulesModal') === '1' && !sessionStorage.getItem('rulesModalSeen')) {
-    showRulesModal();
-    sessionStorage.removeItem('showRulesModal');
-  }
-  sessionStorage.removeItem('rulesModalSeen');
-}
-
+    // Khởi động trang
+    async function loadAll() {
+      let user = getCurrentUser();
+      if (!user) {
+        document.getElementById('shop-section').style.display = 'none';
+        document.getElementById('user-section').style.display = 'none';
+        document.getElementById('login-section').style.display = 'block';
+        document.getElementById('admin-section').style.display = 'none';
+        document.getElementById('stock-section').style.display = 'none';
+        document.getElementById('orders-section').style.display = 'none';
+        renderSpecialLinkBtn();
+        return;
+      }
+      document.getElementById('login-section').style.display = 'none';
+      document.getElementById('register-section').style.display = 'none';
+      document.getElementById('shop-section').style.display = 'block';
+      document.getElementById('user-section').style.display = 'block';
+      await renderBalance();
+      await renderProducts();
+      renderCart();
+      await renderAdminSection();
+      await renderStockSection();
+      await renderOrdersSection();
+      await renderSpecialLinkBtn();
+      if (sessionStorage.getItem('showRulesModal') === '1' && !sessionStorage.getItem('rulesModalSeen')) {
+        showRulesModal();
+        sessionStorage.removeItem('showRulesModal');
+      }
+      sessionStorage.removeItem('rulesModalSeen');
+    }
+    await renderDoubleHistory();
+initDoubleStreak();
     loadAll();
 
     function showRulesModal() {
@@ -602,207 +597,101 @@ async function loadAll() {
       document.getElementById('rules-modal').style.display = 'none';
       sessionStorage.setItem('rulesModalSeen', '1');
     }
-    // Cấu hình phần thưởng và tỉ lệ (cộng lại = 100)
-const wheelRewards = [
-  { label: '5 xu',     rate: 30, lucky: true },
-  { label: '10 xu',    rate: 25, lucky: true },
-  { label: '1 Xu',     rate: 5, lucky: true },
-  { label: 'Skin Vip', rate: 5, lucky: true },
-  { label: 'Vé x2',    rate: 10, lucky: true },
-  { label: 'Không trúng', rate: 25, lucky: false }
-];
+    // ===== Double or Nothing game =====
 
-// Vẽ vòng quay may mắn
-function drawLuckyWheel() {
-  const canvas = document.getElementById('luckywheel-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const n = wheelRewards.length;
-  const r = canvas.width/2;
-  let start = -Math.PI/2;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  for(let i=0; i<n; i++) {
-    ctx.beginPath();
-    ctx.moveTo(r, r);
-    ctx.arc(r, r, r-2, start, start + 2*Math.PI/n, false);
-    ctx.closePath();
-    ctx.fillStyle = i%2==0 ? "#ffe0b2" : "#ffd180";
-    ctx.fill();
-    ctx.stroke();
-    // Text
-    ctx.save();
-    ctx.translate(r, r);
-    ctx.rotate(start + Math.PI/n);
-    ctx.textAlign = "center";
-    ctx.font = "bold 15px Arial";
-    ctx.fillStyle="#bf360c";
-    ctx.fillText(wheelRewards[i].label, r*0.6, 6);
-    ctx.restore();
-    start += 2*Math.PI/n;
-  }
-  // Kim chỉ
-  ctx.beginPath();
-  ctx.moveTo(r, r-74);
-  ctx.lineTo(r-7, r-60);
-  ctx.lineTo(r+7, r-60);
-  ctx.closePath();
-  ctx.fillStyle="#d84315";
-  ctx.fill();
+// Chuỗi nhân đôi tối đa 10 lần mỗi phiên
+function getDoubleStreak() {
+  return parseInt(sessionStorage.getItem('double_streak') || '0');
 }
-drawLuckyWheel();
-
-// Hiển thị tỉ lệ
-function renderWheelRates() {
-  let list = document.getElementById('wheel-rate-list');
-  list.innerHTML = '';
-  wheelRewards.forEach(r => {
-    list.innerHTML += `<li>${r.label}: <b>${r.rate}%</b></li>`;
-  });
+function setDoubleStreak(val) {
+  sessionStorage.setItem('double_streak', val);
+  document.getElementById('double-streak').textContent = val;
 }
-renderWheelRates();
 
-let isSpinning = false;
-async function spinLuckyWheel() {
-  if (isSpinning) return;
+// Reset chuỗi nhân đôi
+function resetDoubleStreak() {
+  setDoubleStreak(0);
+  document.getElementById('double-btn').disabled = false;
+  document.getElementById('double-reset-btn').style.display = 'none';
+  document.getElementById('double-msg').textContent = '';
+}
+
+// Chơi game double or nothing
+async function playDoubleOrNothing() {
   const user = getCurrentUser();
-  const msg = document.getElementById('wheel-msg');
+  const msg = document.getElementById('double-msg');
   if (!user) {
-    msg.textContent = "Bạn cần đăng nhập để quay!";
+    msg.textContent = "Bạn cần đăng nhập để chơi!";
+    return;
+  }
+  let streak = getDoubleStreak();
+  if (streak >= 10) {
+    msg.textContent = "Bạn đã nhân đôi tối đa 10 lần! Hãy bắt đầu lại.";
+    document.getElementById('double-btn').disabled = true;
+    document.getElementById('double-reset-btn').style.display = '';
     return;
   }
   // Lấy số dư mới nhất
   let { data: freshUser } = await supabase.from('users').select('*').eq('id', user.id).maybeSingle();
-  if (!freshUser || freshUser.balance < 5) {
-    msg.textContent = "Bạn không đủ xu để quay!";
+  if (!freshUser || freshUser.balance < 4) {
+    msg.textContent = "Bạn không đủ xu để chơi!";
     return;
   }
-  isSpinning = true;
+  document.getElementById('double-btn').disabled = true;
   msg.textContent = "Đang quay...";
-  // Xác định phần thưởng theo tỉ lệ
-  const rand = Math.random()*100;
-  let sum = 0, rewardIdx = 0;
-  for(let i=0;i<wheelRewards.length;i++) {
-    sum += wheelRewards[i].rate;
-    if (rand < sum) {
-      rewardIdx = i; break;
+  // Tỷ lệ thắng 40%
+  const win = Math.random() < 0.4;
+  // Trừ 4 xu
+  await supabase.from('users').update({ balance: freshUser.balance - 4 }).eq('id', user.id);
+  if (win) {
+    await supabase.from('users').update({ balance: freshUser.balance - 4 + 8 }).eq('id', user.id);
+    streak++;
+    setDoubleStreak(streak);
+    msg.style.color = "#1b5e20";
+    msg.textContent = `🎉 Nhân đôi thành công lần ${streak}! Bạn nhận được 8 xu!`;
+    if (streak >= 10) {
+      msg.textContent += " Bạn đã đạt giới hạn 10 lần nhân đôi liên tiếp. Hãy bắt đầu lại.";
+      document.getElementById('double-btn').disabled = true;
+      document.getElementById('double-reset-btn').style.display = '';
     }
+  } else {
+    setDoubleStreak(0);
+    msg.style.color = "#d32f2f";
+    msg.textContent = "😢 Rất tiếc, bạn đã mất 4 xu và chuỗi nhân đôi bị reset!";
+    document.getElementById('double-reset-btn').style.display = '';
   }
-  // Animation xoay
-  await animateWheelSpin(rewardIdx);
-
-  // Trừ xu
-  await supabase.from('users').update({ balance: freshUser.balance - 5 }).eq('id', user.id);
-
-  // Ghi nhận lịch sử
-  const reward = wheelRewards[rewardIdx];
-  const now = new Date().toLocaleString();
-  await supabase.from('wheel_history').insert([{
-    username: user.username,
-    reward: reward.label,
-    time: new Date().toISOString(),
-    lucky: reward.lucky,
-    note: reward.lucky ? "Trúng thưởng" : "Không trúng"
-  }]);
-  msg.style.color = reward.lucky ? "#1b5e20" : "#d32f2f";
-  msg.textContent = reward.lucky ? `Chúc mừng! Bạn nhận được: ${reward.label}` : "Chưa may mắn, thử lại nhé!";
-  setTimeout(()=>{msg.textContent=""; msg.style.color="#d32f2f";}, 3500);
-
-  // Nếu là phần thưởng xu thì cộng ngay cho user
-  if (reward.label.endsWith('Xu')) {
-    const addXu = parseInt(reward.label);
-    if (addXu > 0)
-      await supabase.from('users').update({ balance: freshUser.balance - 5 + addXu }).eq('id', user.id);
-  }
-
-  // Nếu là phần thưởng đặc biệt thì gửi cho admin hoặc lưu Supabase
-  if (reward.lucky && reward.label !== "1 Xu" && !reward.label.endsWith("Xu")) {
-    await supabase.from('wheel_notify').insert([{
-      username: user.username,
-      reward: reward.label,
-      time: now,
-      note: "Trúng thưởng vòng quay"
-    }]);
-  }
-
+  setTimeout(()=>{msg.style.color="#d32f2f";document.getElementById('double-btn').disabled=false;}, 2000);
   await renderBalance();
-  await renderWheelHistory();
-  isSpinning = false;
+  await renderDoubleHistory();
+  // Lưu lịch sử vào supabase
+  await supabase.from('double_history').insert([{
+    username: user.username,
+    result: win ? `Thắng (Nhận 8 xu, chuỗi: ${streak})` : "Thua (Mất 4 xu, chuỗi bị reset)",
+    time: new Date().toLocaleString()
+  }]);
 }
 
-// Animation quay bánh xe (đơn giản, bạn có thể nâng cấp sau)
-function animateWheelSpin(idx) {
-  return new Promise(resolve => {
-    const canvas = document.getElementById('luckywheel-canvas');
-    const ctx = canvas.getContext('2d');
-    const n = wheelRewards.length;
-    let angle = 0;
-    let anglePerSector = 2 * Math.PI / n;
-    let numRounds = 4; // Quay 4 vòng cho đẹp
-    let offset = Math.PI/2;
-    let target = 2 * Math.PI * numRounds + (idx * anglePerSector) + offset;
-    function spin() {
-      ctx.save();
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.translate(canvas.width/2, canvas.height/2);
-      ctx.rotate(angle);
-      ctx.translate(-canvas.width/2, -canvas.height/2);
-      // Vẽ các ô
-      let s = -Math.PI/2;
-      for(let i=0; i<n; i++) {
-        ctx.beginPath();
-        ctx.moveTo(110, 110);
-        ctx.arc(110, 110, 108, s, s + anglePerSector, false);
-        ctx.closePath();
-        ctx.fillStyle = i%2==0 ? "#ffe0b2" : "#ffd180";
-        ctx.fill();
-        ctx.stroke();
-        ctx.save();
-        ctx.translate(110, 110);
-        ctx.rotate(s + anglePerSector/2);
-        ctx.textAlign = "center";
-        ctx.font = "bold 15px Arial";
-        ctx.fillStyle="#bf360c";
-        ctx.fillText(wheelRewards[i].label, 65, 6);
-        ctx.restore();
-        s += anglePerSector;
-      }
-      ctx.restore();
-      // Kim chỉ
-    ctx.beginPath();
-    ctx.moveTo(110, 184);      // đỉnh mũi tên ở dưới cùng
-    ctx.lineTo(103, 170);
-    ctx.lineTo(117, 170);
-    ctx.closePath();
-    ctx.fillStyle="#d84315";
-    ctx.fill();
-      // Animation
-      if (angle < target) {
-        angle += 0.32 - 0.25*(angle/target);
-        if (angle > target) angle = target; // Không vượt quá target
-        requestAnimationFrame(spin);
-      } else {
-        resolve();
-      }
-    }
-    spin();
-  });
-}
-
-// Hiển thị lịch sử quay
-async function renderWheelHistory() {
+// Hiển thị lịch sử chơi
+async function renderDoubleHistory() {
   const user = getCurrentUser();
-  const list = document.getElementById('wheel-history-list');
+  const list = document.getElementById('double-history-list');
   if (!user) { list.innerHTML = '<li>Bạn cần đăng nhập</li>'; return; }
-  let { data } = await supabase.from('wheel_history').select('*').eq('username', user.username).order('id', {ascending:false}).limit(10);
+  let { data } = await supabase.from('double_history').select('*').eq('username', user.username).order('id', {ascending:false}).limit(10);
   list.innerHTML = '';
   if (!data || data.length === 0) {
-    list.innerHTML = '<li>Chưa có lượt quay nào</li>'; return;
+    list.innerHTML = '<li>Chưa có lượt chơi nào</li>'; return;
   }
   data.forEach(h => {
-    list.innerHTML += `<li>${h.time}: <b>${h.reward}</b></li>`;
+    list.innerHTML += `<li>${h.time}: <b>${h.result}</b></li>`;
   });
 }
-renderWheelHistory();
+
+// Khởi tạo chuỗi nhân đôi khi load trang
+function initDoubleStreak() {
+  setDoubleStreak(getDoubleStreak());
+  document.getElementById('double-reset-btn').style.display = getDoubleStreak() > 0 ? '' : 'none';
+}
+
   </script>
 </body>
 </html>
