@@ -738,7 +738,7 @@ function animateWheelSpin(idx) {
     let angle = 0;
     let anglePerSector = 2 * Math.PI / n;
     let numRounds = 4; // Quay 4 vòng cho đẹp
-    let offset = -Math.PI/2;
+    let offset = Math.PI/2;
     let target = 2 * Math.PI * numRounds + (idx * anglePerSector) + offset;
     function spin() {
       ctx.save();
