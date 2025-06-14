@@ -560,6 +560,7 @@
     async function loadAll() {
       let user = getCurrentUser();
       if (!user) {
+        document.getElementById('double-section').style.display = 'block';
         document.getElementById('shop-section').style.display = 'none';
         document.getElementById('user-section').style.display = 'none';
         document.getElementById('login-section').style.display = 'block';
