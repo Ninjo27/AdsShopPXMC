@@ -117,11 +117,10 @@
       Đặt cược <b>4 xu</b> để thử <b>nhân đôi hoặc mất trắng</b>!<br>
       Tỷ lệ thắng: <b>40%</b> | Tỷ lệ thua: <b>60%</b>
     </div>
-    <div style="margin:10px 0;">
-      Số lần nhân đôi liên tiếp: <span id="double-streak">0</span> / 10
-    </div>
-    <button id="double-btn" onclick="playDoubleOrNothing()" style="margin-top:12px; background:#ff9800; color:#fff; border:none; border-radius:6px; padding:9px 30px; font-size:16px; cursor:pointer;">Chơi Ngay!</button>
-    <button id="double-reset-btn" onclick="resetDoubleStreak()" style="display:none;margin-left:10px;">Bắt đầu lại</button>
+    <div id="double-current" style="font-size:15px; color:#1b5e20; margin-bottom:10px;"></div>
+    <button id="double-start-btn" onclick="startDoubleGame()" style="margin-top:12px; background:#ff9800; color:#fff; border:none; border-radius:6px; padding:9px 25px; font-size:16px; cursor:pointer;">Chơi mới (4 xu)</button>
+    <button id="double-btn" onclick="doubleOrNothing()" style="display:none; margin-top:12px; background:#ff9800; color:#fff; border:none; border-radius:6px; padding:9px 25px; font-size:16px; cursor:pointer;">Nhân đôi tiếp</button>
+    <button id="double-take-btn" onclick="takeDoubleWinnings()" style="display:none; margin-top:12px; background:#388e3c; color:#fff; border:none; border-radius:6px; padding:9px 25px; font-size:16px; cursor:pointer;">Rút xu</button>
     <div class="msg" id="double-msg"></div>
   </div>
   <div style="margin-top:18px;">
@@ -582,8 +581,7 @@ async function loadAll() {
   await renderStockSection();
   await renderOrdersSection();
   await renderSpecialLinkBtn();
-  await renderDoubleHistory();
-  initDoubleStreak();
+  initDoubleCasino();
   if (sessionStorage.getItem('showRulesModal') === '1' && !sessionStorage.getItem('rulesModalSeen')) {
     showRulesModal();
     sessionStorage.removeItem('showRulesModal');
@@ -599,82 +597,102 @@ async function loadAll() {
       document.getElementById('rules-modal').style.display = 'none';
       sessionStorage.setItem('rulesModalSeen', '1');
     }
-    // ===== Double or Nothing game =====
+   // ===== Double or Nothing game kiểu casino =====
 
-// Chuỗi nhân đôi tối đa 10 lần mỗi phiên
-function getDoubleStreak() {
-  return parseInt(sessionStorage.getItem('double_streak') || '0');
+function getDoubleState() {
+  return JSON.parse(sessionStorage.getItem('double_state') || '{"inGame":false,"value":0}');
 }
-function setDoubleStreak(val) {
-  sessionStorage.setItem('double_streak', val);
-  document.getElementById('double-streak').textContent = val;
+function setDoubleState(state) {
+  sessionStorage.setItem('double_state', JSON.stringify(state));
 }
-
-// Reset chuỗi nhân đôi
-function resetDoubleStreak() {
-  setDoubleStreak(0);
-  document.getElementById('double-btn').disabled = false;
-  document.getElementById('double-reset-btn').style.display = 'none';
-  document.getElementById('double-msg').textContent = '';
+function resetDoubleState() {
+  setDoubleState({inGame:false, value:0});
 }
 
-// Chơi game double or nothing
-async function playDoubleOrNothing() {
+async function startDoubleGame() {
   const user = getCurrentUser();
   const msg = document.getElementById('double-msg');
   if (!user) {
     msg.textContent = "Bạn cần đăng nhập để chơi!";
     return;
   }
-  let streak = getDoubleStreak();
-  if (streak >= 10) {
-    msg.textContent = "Bạn đã nhân đôi tối đa 10 lần! Hãy bắt đầu lại.";
-    document.getElementById('double-btn').disabled = true;
-    document.getElementById('double-reset-btn').style.display = '';
-    return;
-  }
-  // Lấy số dư mới nhất
   let { data: freshUser } = await supabase.from('users').select('*').eq('id', user.id).maybeSingle();
   if (!freshUser || freshUser.balance < 4) {
     msg.textContent = "Bạn không đủ xu để chơi!";
     return;
   }
-  document.getElementById('double-btn').disabled = true;
-  msg.textContent = "Đang quay...";
-  // Tỷ lệ thắng 40%
-  const win = Math.random() < 0.4;
-  // Trừ 4 xu
   await supabase.from('users').update({ balance: freshUser.balance - 4 }).eq('id', user.id);
-  if (win) {
-    await supabase.from('users').update({ balance: freshUser.balance - 4 + 8 }).eq('id', user.id);
-    streak++;
-    setDoubleStreak(streak);
-    msg.style.color = "#1b5e20";
-    msg.textContent = `🎉 Nhân đôi thành công lần ${streak}! Bạn nhận được 8 xu!`;
-    if (streak >= 10) {
-      msg.textContent += " Bạn đã đạt giới hạn 10 lần nhân đôi liên tiếp. Hãy bắt đầu lại.";
-      document.getElementById('double-btn').disabled = true;
-      document.getElementById('double-reset-btn').style.display = '';
-    }
-  } else {
-    setDoubleStreak(0);
-    msg.style.color = "#d32f2f";
-    msg.textContent = "😢 Rất tiếc, bạn đã mất 4 xu và chuỗi nhân đôi bị reset!";
-    document.getElementById('double-reset-btn').style.display = '';
-  }
-  setTimeout(()=>{msg.style.color="#d32f2f";document.getElementById('double-btn').disabled=false;}, 2000);
+  setDoubleState({inGame:true, value:4});
+  showDoubleMsg("Bạn bắt đầu với 4 xu. Chọn Nhân đôi hoặc Rút xu.");
+  renderDoubleGameUI();
   await renderBalance();
-  await renderDoubleHistory();
+}
+
+async function doubleOrNothing() {
+  let state = getDoubleState();
+  if (!state.inGame) return;
+  const win = Math.random() < 0.4;
+  if (win) {
+    state.value *= 2;
+    setDoubleState(state);
+    showDoubleMsg(`🎉 Bạn còn lại ${state.value} xu. Chọn tiếp tục hoặc rút xu.`);
+  } else {
+    showDoubleMsg("😢 Rất tiếc, bạn đã mất sạch số xu đang cược!");
+    resetDoubleState();
+  }
+  renderDoubleGameUI();
+  await renderDoubleHistory(true); // true: không cần reload khi mất
+  await renderBalance();
   // Lưu lịch sử vào supabase
+  const user = getCurrentUser();
   await supabase.from('double_history').insert([{
     username: user.username,
-    result: win ? `Thắng (Nhận 8 xu, chuỗi: ${streak})` : "Thua (Mất 4 xu, chuỗi bị reset)",
+    result: win ? `Thắng (Nhân đôi lên ${state.value} xu)` : "Thua (Mất sạch)",
     time: new Date().toLocaleString()
   }]);
 }
 
-// Hiển thị lịch sử chơi
-async function renderDoubleHistory() {
+async function takeDoubleWinnings() {
+  const user = getCurrentUser();
+  let state = getDoubleState();
+  if (!user || !state.inGame || state.value <= 0) return;
+  // Cộng xu vào tài khoản
+  let { data: freshUser } = await supabase.from('users').select('*').eq('id', user.id).maybeSingle();
+  await supabase.from('users').update({ balance: freshUser.balance + state.value }).eq('id', user.id);
+  showDoubleMsg(`🎉 Bạn đã rút ${state.value} xu thành công!`);
+  resetDoubleState();
+  renderDoubleGameUI();
+  await renderDoubleHistory(true);
+  await renderBalance();
+  // Lưu lịch sử vào supabase
+  await supabase.from('double_history').insert([{
+    username: user.username,
+    result: `Rút ${state.value} xu`,
+    time: new Date().toLocaleString()
+  }]);
+}
+
+function renderDoubleGameUI() {
+  let state = getDoubleState();
+  const cur = document.getElementById('double-current');
+  if (!state.inGame) {
+    document.getElementById('double-start-btn').style.display = '';
+    document.getElementById('double-btn').style.display = 'none';
+    document.getElementById('double-take-btn').style.display = 'none';
+    cur.textContent = '';
+  } else {
+    document.getElementById('double-start-btn').style.display = 'none';
+    document.getElementById('double-btn').style.display = '';
+    document.getElementById('double-take-btn').style.display = '';
+    cur.textContent = `Số xu đang cược: ${state.value}`;
+  }
+}
+
+function showDoubleMsg(msg) {
+  document.getElementById('double-msg').textContent = msg;
+}
+
+async function renderDoubleHistory(skipReload) {
   const user = getCurrentUser();
   const list = document.getElementById('double-history-list');
   if (!user) { list.innerHTML = '<li>Bạn cần đăng nhập</li>'; return; }
@@ -688,10 +706,10 @@ async function renderDoubleHistory() {
   });
 }
 
-// Khởi tạo chuỗi nhân đôi khi load trang
-function initDoubleStreak() {
-  setDoubleStreak(getDoubleStreak());
-  document.getElementById('double-reset-btn').style.display = getDoubleStreak() > 0 ? '' : 'none';
+// Khi loadAll, gọi:
+function initDoubleCasino() {
+  renderDoubleGameUI();
+  renderDoubleHistory();
 }
 
   </script>
