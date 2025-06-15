@@ -196,10 +196,10 @@
     <div id="shop-section" style="display:none;">
       <h2>Sản phẩm nổi bật</h2>
       <div id="category-filter" style="margin-bottom:20px; text-align:center;">
-  <button class="btn-category active">Tất cả</button>
-  <button class="btn-category">Thức ăn</button>
-  <button class="btn-category">Trang bị</button>
-  <button class="btn-category">Vật phẩm</button>
+  <button class="btn-category active" onclick="filterCategory('all', this)">Tất cả</button>
+  <button class="btn-category" onclick="filterCategory('thuc-an', this)">Thức ăn</button>
+  <button class="btn-category" onclick="filterCategory('trang-bi', this)">Trang bị</button>
+  <button class="btn-category" onclick="filterCategory('vat-pham', this)">Vật phẩm</button>
   <!-- Thêm nút cho các danh mục khác nếu muốn -->
 </div>
       <div class="products" id="products-list"></div>
