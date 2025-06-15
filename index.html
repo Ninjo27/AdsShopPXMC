@@ -160,7 +160,7 @@
     <h1>AdsShop - Xem quảng cáo và mua sắm</h1>
     <div id="user-section" style="display:none;">
       Xin chào <span id="username-display"></span> | Số dư: <span class="balance" id="balance"></span> Xu
-      <button onclick="logout()" style="margin-left:20px;">Đăng xuất</button>
+      <button class="btn-logout" onclick="logout()">Đăng xuất</button>
     </div>
   </div>
   <div style="width:100%; background: #388e3c; text-align:center; padding: 12px 0;">
@@ -181,7 +181,7 @@
       <h2>Đăng nhập</h2>
       <input type="text" id="username" placeholder="Tên Minecraft" required>
       <input type="password" id="password" placeholder="Mật khẩu" required>
-      <button onclick="login()">Đăng nhập</button>
+     <button class="btn-auth" onclick="login()">Đăng nhập</button>
       <div style="margin-top:10px;">Chưa có tài khoản? <a href="#" onclick="showRegister();return false;">Đăng ký</a></div>
       <div class="msg" id="login-msg"></div>
     </div>
@@ -189,17 +189,17 @@
       <h2>Đăng ký</h2>
       <input type="text" id="reg-username" placeholder="Tên Minecraft" required>
       <input type="password" id="reg-password" placeholder="Mật khẩu" required>
-      <button onclick="register()">Đăng ký</button>
+      <button class="btn-auth" onclick="register()">Đăng ký</button>
       <div style="margin-top:10px;">Đã có tài khoản? <a href="#" onclick="showLogin();return false;">Đăng nhập</a></div>
       <div class="msg" id="register-msg"></div>
     </div>
     <div id="shop-section" style="display:none;">
       <h2>Sản phẩm nổi bật</h2>
       <div id="category-filter" style="margin-bottom:20px; text-align:center;">
-  <button onclick="filterCategory('all')" style="margin-right:10px;">Tất cả</button>
-  <button onclick="filterCategory('thuc-an')" style="margin-right:10px;">Thức ăn</button>
-  <button onclick="filterCategory('trang-bi')" style="margin-right:10px;">Trang bị</button>
-  <button onclick="filterCategory('vat-pham')" style="margin-right:10px;">Vật phẩm</button>
+  <button class="btn-category active">Tất cả</button>
+  <button class="btn-category">Thức ăn</button>
+  <button class="btn-category">Trang bị</button>
+  <button class="btn-category">Vật phẩm</button>
   <!-- Thêm nút cho các danh mục khác nếu muốn -->
 </div>
       <div class="products" id="products-list"></div>
