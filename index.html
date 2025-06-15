@@ -32,6 +32,23 @@
     #admin-section h2, #orders-section h2, #stock-section h2 { margin-top: 0; }
     #stock-list input[type=number] { width: 60px; }
   </style>
+  .nav-btn {
+  background: #ffefcf;
+  color: #ff5722;
+  border: none;
+  padding: 9px 26px;
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0 4px;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  box-shadow: 0 1px 3px rgba(255,87,34,0.07);
+}
+.nav-btn:hover, .nav-btn.active {
+  background: #ff5722;
+  color: #fff;
+}
 </head>
 <body>
 <!-- Modal hướng dẫn/thể lệ khi đăng nhập -->
@@ -67,6 +84,12 @@
       style="display:none; background:#fff; color:#388e3c; font-weight:bold; font-size:18px; padding:10px 30px; border-radius:6px; text-decoration:none; box-shadow:0 2px 6px rgba(0,0,0,0.09); transition:background 0.2s;">
       🔗 Xem quảng cáo và nhận xu
     </a>
+    <div id="main-navbar" style="display:none; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.05); border-radius:8px; width:1000px; margin:16px auto 0 auto; display:flex; justify-content:center; gap:24px; padding:10px 0;">
+  <button class="nav-btn" id="shop-nav-btn" onclick="showSection('shop')">🛒 Mua hàng</button>
+  <button class="nav-btn" id="pay-nav-btn" onclick="showSection('pay')">💸 Thanh toán</button>
+  <button class="nav-btn" id="game-nav-btn" onclick="showSection('game')">🎮 Game</button>
+  <button class="nav-btn" id="admin-nav-btn" style="display:none;" onclick="showSection('admin')">🛠️ Admin</button>
+</div>
   </div>
   <div class="container">
     <div id="login-section" style="display:none;">
@@ -577,21 +600,35 @@ await supabase.from('products').update({ stock: value }).eq('id', Number(pid));
 async function loadAll() {
   let user = getCurrentUser();
   if (!user) {
+    // Ẩn các phần khi chưa đăng nhập
     document.getElementById('shop-section').style.display = 'none';
     document.getElementById('user-section').style.display = 'none';
     document.getElementById('login-section').style.display = 'block';
     document.getElementById('admin-section').style.display = 'none';
     document.getElementById('stock-section').style.display = 'none';
     document.getElementById('orders-section').style.display = 'none';
+    document.getElementById('speciallink-section').style.display = 'none';
+    document.getElementById('double-section').style.display = 'none';
+    document.getElementById('stats-section') && (document.getElementById('stats-section').style.display = 'none');
+    document.getElementById('main-navbar').style.display = 'none';
     renderSpecialLinkBtn();
-    document.getElementById('double-section').style.display = 'none'; // <-- THÊM DÒNG NÀY!
     return;
   }
+  // Đã đăng nhập, hiển thị các phần phù hợp
   document.getElementById('login-section').style.display = 'none';
   document.getElementById('register-section').style.display = 'none';
   document.getElementById('shop-section').style.display = 'block';
   document.getElementById('user-section').style.display = 'block';
-  document.getElementById('double-section').style.display = 'block'; // <-- THÊM DÒNG NÀY!
+  document.getElementById('double-section').style.display = 'block';
+  document.getElementById('main-navbar').style.display = 'flex';
+
+  // Phân quyền hiển thị admin
+  if (user.username === 'admin') {
+    document.getElementById('admin-nav-btn').style.display = '';
+  } else {
+    document.getElementById('admin-nav-btn').style.display = 'none';
+  }
+
   await renderBalance();
   await renderProducts();
   renderCart();
@@ -599,12 +636,18 @@ async function loadAll() {
   await renderStockSection();
   await renderOrdersSection();
   await renderSpecialLinkBtn();
+  typeof renderStatsSection === "function" && await renderStatsSection();
   initDoubleCasino();
+
+  // Xử lý modal thể lệ
   if (sessionStorage.getItem('showRulesModal') === '1' && !sessionStorage.getItem('rulesModalSeen')) {
     showRulesModal();
     sessionStorage.removeItem('showRulesModal');
   }
   sessionStorage.removeItem('rulesModalSeen');
+
+  // Khi đăng nhập xong, mặc định hiển thị shop
+  showSection('shop');
 }
     loadAll();
 
@@ -758,6 +801,43 @@ playRandomBgMusic();
 function filterCategory(cat) {
   selectedCategory = cat;
   renderProducts();
+}
+    function showSection(section) {
+  // Ẩn hết mọi section liên quan
+  document.getElementById('shop-section').style.display = 'none';
+  document.getElementById('cart-table').parentElement.parentElement.style.display = 'none';
+  document.getElementById('double-section').style.display = 'none';
+  document.getElementById('admin-section').style.display = 'none';
+  document.getElementById('stock-section').style.display = 'none';
+  document.getElementById('orders-section').style.display = 'none';
+  document.getElementById('stats-section') && (document.getElementById('stats-section').style.display = 'none');
+  document.getElementById('speciallink-section').style.display = 'none';
+
+  // Reset active
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+  switch(section) {
+    case 'shop':
+      document.getElementById('shop-section').style.display = 'block';
+      document.getElementById('shop-nav-btn').classList.add('active');
+      break;
+    case 'pay':
+      document.getElementById('cart-table').parentElement.parentElement.style.display = 'block';
+      document.getElementById('pay-nav-btn').classList.add('active');
+      break;
+    case 'game':
+      document.getElementById('double-section').style.display = 'block';
+      document.getElementById('game-nav-btn').classList.add('active');
+      break;
+    case 'admin':
+      document.getElementById('admin-section').style.display = 'block';
+      document.getElementById('stock-section').style.display = 'block';
+      document.getElementById('orders-section').style.display = 'block';
+      document.getElementById('speciallink-section').style.display = 'block';
+      document.getElementById('stats-section') && (document.getElementById('stats-section').style.display = 'block');
+      document.getElementById('admin-nav-btn').classList.add('active');
+      break;
+  }
 }
   </script>
 </body>
