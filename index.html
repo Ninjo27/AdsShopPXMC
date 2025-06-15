@@ -48,6 +48,92 @@
   background: #ff5722;
   color: #fff;
 }
+    /* Nhóm nút chọn danh mục sản phẩm */
+.product-filter-group {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Nút danh mục sản phẩm */
+.btn-category {
+  background: #fffbe7;
+  color: #ff9800;
+  border: 1.5px solid #ff9800;
+  border-radius: 18px;
+  font-weight: 600;
+  padding: 10px 34px;
+  font-size: 17px;
+  margin: 0 2px;
+  box-shadow: 0 2px 8px rgba(255,152,0,0.10);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.14s;
+  outline: none;
+  letter-spacing: 0.5px;
+}
+
+.btn-category:hover,
+.btn-category:focus {
+  background: linear-gradient(90deg, #ff9800 0%, #ff5722 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(255,152,0,0.18);
+  transform: translateY(-2px) scale(1.04);
+  border-color: #ff9800;
+}
+
+.btn-category.active {
+  background: linear-gradient(90deg, #ff9800 0%, #ff5722 100%);
+  color: #fff;
+  border-color: #ff9800;
+  box-shadow: 0 4px 14px rgba(255,152,0,0.16);
+}
+    /* Nút Đăng ký và Đăng nhập */
+.btn-auth {
+  background: linear-gradient(90deg, #ff9800 0%, #ff5722 100%);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-weight: bold;
+  font-size: 17px;
+  padding: 11px 36px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(255,87,34,0.10);
+  transition: background 0.18s, box-shadow 0.18s, transform 0.14s;
+  margin: 8px 0 5px 0;
+  outline: none;
+  letter-spacing: 0.2px;
+}
+.btn-auth:hover, .btn-auth:focus {
+  background: linear-gradient(90deg, #ff5722 0%, #ff9800 100%);
+  box-shadow: 0 4px 18px rgba(255,152,0,0.18);
+  transform: translateY(-2px) scale(1.04);
+}
+
+/* Nút Đăng xuất */
+.btn-logout {
+  background: #fff;
+  color: #ff9800;
+  border: 2px solid #ff9800;
+  border-radius: 9px;
+  font-weight: bold;
+  font-size: 17px;
+  padding: 9px 32px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(255,152,0,0.09);
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.14s;
+  margin: 8px 0 5px 16px;
+  outline: none;
+  letter-spacing: 0.2px;
+}
+.btn-logout:hover, .btn-logout:focus {
+  background: #ff9800;
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(255,152,0,0.18);
+  transform: translateY(-2px) scale(1.04);
+  border-color: #ff9800;
+}
   </style>
 </head>
 <body>
