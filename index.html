@@ -134,6 +134,109 @@
   transform: translateY(-2px) scale(1.04);
   border-color: #ff9800;
 }
+    /* XỔ SỐ ĐẸP */
+#lottery-section {
+  background: #fffbe7;
+  border-radius: 18px;
+  box-shadow: 0 6px 32px rgba(255,152,0,0.13);
+  margin: 45px auto 0 auto;
+  max-width: 440px;
+  padding: 34px 28px 28px 28px;
+  font-size: 17px;
+  position: relative;
+  border: 1.5px solid #ffd180;
+}
+#lottery-section h2 {
+  color: #e65100;
+  text-align: center;
+  margin: 0 0 14px 0;
+  font-size: 27px;
+  letter-spacing: 0.5px;
+}
+#lottery-info {
+  font-size: 17px;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #e65100;
+  background: #fffde7;
+  border-radius: 12px;
+  padding: 12px 10px 8px 10px;
+  box-shadow: 0 2px 10px rgba(255,152,0,0.07);
+}
+#lottery-form {
+  margin-bottom: 15px;
+  background: #fff;
+  border-radius: 11px;
+  padding: 17px 18px 9px 18px;
+  box-shadow: 0 2px 12px rgba(255,152,0,0.09);
+  text-align: center;
+}
+#lottery-form label {
+  font-weight: 600;
+  color: #e65100;
+  font-size: 16px;
+  margin-bottom: 6px;
+  display: block;
+}
+#lottery-number {
+  font-size: 18px;
+  border-radius: 8px;
+  padding: 7px 16px;
+  border: 1.7px solid #ffd180;
+  background: #fffbe7;
+  margin-left: 8px;
+  width: 85px;
+  text-align: center;
+  transition: border 0.18s;
+}
+#lottery-number:focus {
+  border: 1.7px solid #ff9800;
+  outline: none;
+  background: #fff;
+}
+#lottery-form .btn-auth {
+  margin-top: 11px;
+  padding: 10px 30px;
+  font-size: 17px;
+  background: linear-gradient(90deg, #ff9800 0%, #ff5722 100%);
+  border-radius: 8px;
+}
+#lottery-msg {
+  margin-top: 8px;
+  font-size: 15px;
+  text-align: center;
+}
+#lottery-history {
+  margin-top: 24px;
+}
+.lottery-ticket {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(255,152,0,0.09);
+  margin-bottom: 11px;
+  padding: 13px 16px 9px 16px;
+  font-size: 15.5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 4px solid #ffd180;
+  color: #333;
+}
+.lottery-ticket .win {
+  color: #388e3c;
+  font-weight: bold;
+}
+.lottery-ticket .lose {
+  color: #d32f2f;
+  font-weight: bold;
+}
+.lottery-ticket .waiting {
+  color: #ffa000;
+  font-weight: bold;
+}
+@media (max-width: 600px) {
+  #lottery-section { max-width: 99vw; padding: 16px 3vw; }
+}
   </style>
 </head>
 <body>
@@ -305,6 +408,18 @@
     <div class="msg" id="review-msg"></div>
   </div>
   <div id="review-list"></div>
+</div>
+  <div id="lottery-section" style="display:none;">
+  <h2>🎟️ Xổ Số May Mắn</h2>
+  <div id="lottery-info"></div>
+  <div id="lottery-form" style="display:none;">
+    <label>Chọn số may mắn (1–99): 
+      <input type="number" id="lottery-number" min="1" max="99">
+    </label>
+    <button class="btn-auth" onclick="buyLotteryTicket()">Mua vé (3 xu)</button>
+    <div class="msg" id="lottery-msg"></div>
+  </div>
+  <div id="lottery-history"></div>
 </div>
   <script>
     // Cấu hình Supabase
@@ -1019,6 +1134,68 @@ async function submitReview() {
   msg.textContent = "Cảm ơn bạn đã đánh giá!";
   setTimeout(()=>{msg.textContent='';msg.style.color='#d32f2f';},2000);
   renderReviewSection();
+}
+    async function renderLotterySection() {
+  const user = getCurrentUser();
+  const today = getTodayStr();
+
+  // Lấy số đã xổ hôm nay
+  let { data: drawToday } = await supabase.from('lottery_draws').select('*').eq('draw_date', today).maybeSingle();
+
+  // Lấy vé đã bán hôm nay
+  let { data: ticketsToday } = await supabase.from('lottery_tickets').select('*').eq('draw_date', today);
+
+  // Lấy vé của user hôm nay
+  let userTicket = null;
+  if (user) userTicket = ticketsToday.find(t => t.username === user.username);
+
+  // Thông tin xổ số
+  let info = "";
+  if (drawToday) {
+    info = `<b>Kết quả hôm nay: <span style="color:#388e3c; font-size:22px;">${drawToday.winning_number}</span></b><br>Ai trúng số này sẽ được thưởng <b>50 xu</b>!<br>`;
+  } else {
+    info = `Bạn có thể mua vé số <b>1–99</b>.<br>Mỗi số <span style="color:#ff9800;">chỉ 1 người</span> chọn/ngày.<br>Đúng số sẽ nhận <b>50 xu</b>!<br>Kết quả sẽ xổ vào <b>18:00 hôm nay</b>.`;
+  }
+  document.getElementById('lottery-info').innerHTML = info;
+
+  // Form mua vé
+  if (!user) {
+    document.getElementById('lottery-form').style.display = 'none';
+  } else if (drawToday) {
+    document.getElementById('lottery-form').style.display = 'none';
+    if (userTicket)
+      document.getElementById('lottery-msg').textContent = `Bạn đã mua số ${userTicket.number} hôm nay.`;
+  } else if (userTicket) {
+    document.getElementById('lottery-form').style.display = 'none';
+    document.getElementById('lottery-msg').textContent = `Bạn đã mua số ${userTicket.number} cho hôm nay!`;
+  } else {
+    document.getElementById('lottery-form').style.display = 'block';
+    document.getElementById('lottery-number').value = '';
+    document.getElementById('lottery-msg').textContent = '';
+  }
+
+  // Lịch sử xổ số của user
+  let html = "<h4 style='margin-bottom:13px; color:#e65100; text-align:center;'>Lịch sử vé số của bạn</h4>";
+  if (!user) {
+    html += "<p style='text-align:center;'>Bạn cần đăng nhập để xem lịch sử.</p>";
+  } else {
+    let { data: tickets } = await supabase.from('lottery_tickets').select('*').eq('username', user.username).order('draw_date', {ascending: false}).limit(15);
+    if (!tickets || tickets.length === 0) {
+      html += "<p style='text-align:center;'>Bạn chưa từng mua vé số.</p>";
+    } else {
+      for (let t of tickets) {
+        let res = "";
+        if (t.is_winner) res = '<span class="win">Trúng 50 xu!</span>';
+        else if (t.number && t.draw_date < today && t.is_winner===false) res = '<span class="lose">Không trúng</span>';
+        else if (t.draw_date === today && !drawToday) res = '<span class="waiting">Chờ xổ...</span>';
+        html += `<div class="lottery-ticket">
+                  <div>Ngày <b>${t.draw_date}</b>: Số <b>${t.number}</b></div>
+                  <div>${res}</div>
+                 </div>`;
+      }
+    }
+  }
+  document.getElementById('lottery-history').innerHTML = html;
 }
   </script>
 </body>
