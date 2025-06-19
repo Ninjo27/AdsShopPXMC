@@ -1024,19 +1024,18 @@ function filterCategory(cat) {
   selectedCategory = cat;
   renderProducts();
 }
-    function showSection(section) {
-  // Ẩn hết mọi section liên quan
+  function showSection(section) {
   document.getElementById('review-section').style.display = 'none';
   document.getElementById('shop-section').style.display = 'none';
   document.getElementById('cart-table').parentElement.parentElement.style.display = 'none';
   document.getElementById('double-section').style.display = 'none';
+  document.getElementById('lottery-section').style.display = 'none';
   document.getElementById('admin-section').style.display = 'none';
   document.getElementById('stock-section').style.display = 'none';
   document.getElementById('orders-section').style.display = 'none';
   document.getElementById('stats-section') && (document.getElementById('stats-section').style.display = 'none');
   document.getElementById('speciallink-section').style.display = 'none';
 
-  // Reset active
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
 
   switch(section) {
@@ -1049,13 +1048,13 @@ function filterCategory(cat) {
       document.getElementById('pay-nav-btn').classList.add('active');
       break;
     case 'game':
-  document.getElementById('double-section').style.display = 'block';
-  document.getElementById('lottery-section').style.display = 'block';
-  document.getElementById('game-nav-btn').classList.add('active');
-  renderDoubleGameUI();
-  renderDoubleHistory();
-  renderLotterySection();
-  break;
+      document.getElementById('double-section').style.display = 'block';
+      document.getElementById('lottery-section').style.display = 'block';
+      document.getElementById('game-nav-btn').classList.add('active');
+      renderDoubleGameUI();
+      renderDoubleHistory();
+      renderLotterySection();
+      break;
     case 'admin':
       document.getElementById('admin-section').style.display = 'block';
       document.getElementById('stock-section').style.display = 'block';
@@ -1064,7 +1063,7 @@ function filterCategory(cat) {
       document.getElementById('stats-section') && (document.getElementById('stats-section').style.display = 'block');
       document.getElementById('admin-nav-btn').classList.add('active');
       break;
-          case 'review':
+    case 'review':
       document.getElementById('review-section').style.display = 'block';
       document.getElementById('review-nav-btn').classList.add('active');
       renderReviewSection();
