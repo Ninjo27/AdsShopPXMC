@@ -1201,6 +1201,10 @@ async function submitReview() {
   }
   document.getElementById('lottery-history').innerHTML = html;
 }
+    function getTodayStr() {
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
   </script>
 </body>
 </html>
