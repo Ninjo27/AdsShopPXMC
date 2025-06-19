@@ -346,6 +346,18 @@
     <ul id="double-history-list" style="font-size:14px; color:#444; min-height:48px;"></ul>
   </div>
 </div>
+    <div id="lottery-section" style="display:none;">
+  <h2>🎟️ Xổ Số May Mắn</h2>
+  <div id="lottery-info"></div>
+  <div id="lottery-form" style="display:none;">
+    <label>Chọn số may mắn (1–99): 
+      <input type="number" id="lottery-number" min="1" max="99">
+    </label>
+    <button class="btn-auth" onclick="buyLotteryTicket()">Mua vé (3 xu)</button>
+    <div class="msg" id="lottery-msg"></div>
+  </div>
+  <div id="lottery-history"></div>
+</div>
     <!-- Admin: Cấp xu cho user -->
     <div id="admin-section" style="display:none;">
       <h2>Cấp Xu cho người dùng</h2>
@@ -409,18 +421,7 @@
   </div>
   <div id="review-list"></div>
 </div>
-  <div id="lottery-section" style="display:none;">
-  <h2>🎟️ Xổ Số May Mắn</h2>
-  <div id="lottery-info"></div>
-  <div id="lottery-form" style="display:none;">
-    <label>Chọn số may mắn (1–99): 
-      <input type="number" id="lottery-number" min="1" max="99">
-    </label>
-    <button class="btn-auth" onclick="buyLotteryTicket()">Mua vé (3 xu)</button>
-    <div class="msg" id="lottery-msg"></div>
-  </div>
-  <div id="lottery-history"></div>
-</div>
+  
   <script>
     // Cấu hình Supabase
     const supabaseUrl = 'https://ibylievcmlzzyzkihzfo.supabase.co';
@@ -1048,9 +1049,13 @@ function filterCategory(cat) {
       document.getElementById('pay-nav-btn').classList.add('active');
       break;
     case 'game':
-      document.getElementById('double-section').style.display = 'block';
-      document.getElementById('game-nav-btn').classList.add('active');
-      break;
+  document.getElementById('double-section').style.display = 'block';
+  document.getElementById('lottery-section').style.display = 'block';
+  document.getElementById('game-nav-btn').classList.add('active');
+  renderDoubleGameUI();
+  renderDoubleHistory();
+  renderLotterySection();
+  break;
     case 'admin':
       document.getElementById('admin-section').style.display = 'block';
       document.getElementById('stock-section').style.display = 'block';
