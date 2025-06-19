@@ -173,6 +173,7 @@
     <div id="main-navbar" style="display:none; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.05); border-radius:8px; width:1000px; margin:16px auto 0 auto; display:flex; justify-content:center; gap:24px; padding:10px 0;">
   <button class="nav-btn" id="shop-nav-btn" onclick="showSection('shop')">🛒 Mua hàng</button>
   <button class="nav-btn" id="game-nav-btn" onclick="showSection('game')">🎮 Game</button>
+  <button class="nav-btn" id="review-nav-btn" onclick="showSection('review')">⭐ Đánh giá</button>
   <button class="nav-btn" id="admin-nav-btn" style="display:none;" onclick="showSection('admin')">🛠️ Admin</button>
 </div>
   </div>
@@ -283,6 +284,28 @@
     <audio id="checkout-sound" src="audio/moneycash.mp3"></audio>
     <audio id="bg-music" src="" loop autoplay style="display:none"></audio>
   </div>
+  <div id="review-section" style="display:none;">
+  <h2>Đánh giá của người dùng</h2>
+  <div id="review-form" style="margin-bottom:20px; display:none;">
+    <div style="margin-bottom:7px;">
+      <label>Chọn số sao: 
+        <select id="review-stars">
+          <option value="5">5 ⭐</option>
+          <option value="4">4 ⭐</option>
+          <option value="3">3 ⭐</option>
+          <option value="2">2 ⭐</option>
+          <option value="1">1 ⭐</option>
+        </select>
+      </label>
+    </div>
+    <textarea id="review-content" maxlength="200" placeholder="Viết đánh giá của bạn (tối đa 200 ký tự)" style="width:100%; height:60px;"></textarea>
+    <div>
+      <button class="btn-auth" onclick="submitReview()">Gửi đánh giá</button>
+    </div>
+    <div class="msg" id="review-msg"></div>
+  </div>
+  <div id="review-list"></div>
+</div>
   <script>
     // Cấu hình Supabase
     const supabaseUrl = 'https://ibylievcmlzzyzkihzfo.supabase.co';
@@ -695,6 +718,7 @@ async function loadAll() {
     document.getElementById('double-section').style.display = 'none';
     document.getElementById('stats-section') && (document.getElementById('stats-section').style.display = 'none');
     document.getElementById('main-navbar').style.display = 'none';
+    document.getElementById('review-nav-btn').style.display = '';
     renderSpecialLinkBtn();
     return;
   }
@@ -705,7 +729,8 @@ async function loadAll() {
   document.getElementById('user-section').style.display = 'block';
   document.getElementById('double-section').style.display = 'block';
   document.getElementById('main-navbar').style.display = 'flex';
-
+  document.getElementById('main-navbar').style.display = 'flex';
+  document.getElementById('review-nav-btn').style.display = '';
   // Phân quyền hiển thị admin
   if (user.username === 'admin') {
     document.getElementById('admin-nav-btn').style.display = '';
@@ -919,6 +944,75 @@ function filterCategory(cat) {
       document.getElementById('admin-nav-btn').classList.add('active');
       break;
   }
+}
+    async function renderReviewSection() {
+  // Luôn hiển thị danh sách đánh giá
+  let { data: reviews } = await supabase.from('reviews').select('*').order('created_at', {ascending: false});
+  let html = '';
+  if (!reviews || reviews.length === 0) {
+    html = '<p>Chưa có đánh giá nào.</p>';
+  } else {
+    html = '<ul style="list-style:none; padding:0;">';
+    reviews.forEach(r => {
+      html += `
+        <li style="margin-bottom:16px; border-bottom:1px solid #eee; padding-bottom:8px;">
+          <b>${r.username}</b> - 
+          <span style="color:#ff9800;">${'⭐'.repeat(r.stars)}</span>
+          <div style="margin:6px 0; color:#333;">${r.content.replace(/</g, "&lt;")}</div>
+          <small style="color:#888;">${r.created_at ? new Date(r.created_at).toLocaleString() : ''}</small>
+        </li>
+      `;
+    });
+    html += '</ul>';
+  }
+  document.getElementById('review-list').innerHTML = html;
+
+  // Nếu đã đăng nhập, kiểm tra user đã đánh giá chưa
+  const user = getCurrentUser();
+  if (user) {
+    let { data: exist } = await supabase.from('reviews').select('id').eq('username', user.username).maybeSingle();
+    if (exist) {
+      document.getElementById('review-form').style.display = 'none';
+    } else {
+      document.getElementById('review-form').style.display = 'block';
+      document.getElementById('review-content').value = '';
+      document.getElementById('review-stars').value = 5;
+      document.getElementById('review-msg').textContent = '';
+    }
+  } else {
+    document.getElementById('review-form').style.display = 'none';
+  }
+}
+
+async function submitReview() {
+  const user = getCurrentUser();
+  if (!user) return; // Không nên xảy ra
+  const stars = parseInt(document.getElementById('review-stars').value);
+  const content = document.getElementById('review-content').value.trim();
+  const msg = document.getElementById('review-msg');
+  if (!content) {
+    msg.textContent = "Bạn phải nhập nội dung!";
+    return;
+  }
+  if (content.length > 200) {
+    msg.textContent = "Tối đa 200 ký tự!";
+    return;
+  }
+  // Kiểm tra đã đánh giá chưa
+  let { data: exist } = await supabase.from('reviews').select('id').eq('username', user.username).maybeSingle();
+  if (exist) {
+    msg.textContent = "Bạn đã đánh giá rồi!";
+    return;
+  }
+  await supabase.from('reviews').insert([{
+    username: user.username,
+    stars,
+    content
+  }]);
+  msg.style.color = "#388e3c";
+  msg.textContent = "Cảm ơn bạn đã đánh giá!";
+  setTimeout(()=>{msg.textContent='';msg.style.color='#d32f2f';},2000);
+  renderReviewSection();
 }
   </script>
 </body>
