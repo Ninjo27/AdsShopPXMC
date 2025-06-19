@@ -859,11 +859,8 @@ function initDoubleCasino() {
 }
 // Danh sách các file nhạc nền
 const bgMusics = [
-  "audio/Fade.mp3",
-  "audio/FlyAway.mp3",
-  "audio/Dancin.mp3",
-  "audio/Mortals.mp3",
-  "audio/Royalty.mp3"
+  "audio/MiceOnVenus.mp3",
+  "audio/Sweden.mp3"
 ];
 
 // Phát nhạc nền ngẫu nhiên khi vào site
@@ -873,7 +870,7 @@ function playRandomBgMusic() {
   audio.src = bgMusics[randIndex];
   // Nếu đã có user interaction, tự động play
   audio.currentTime = 0;
-  audio.volume = 0.5; // Tùy chỉnh âm lượng
+  audio.volume = 1; // Tùy chỉnh âm lượng
   audio.play().catch(() => {
     // Một số trình duyệt cần tương tác mới play, bạn có thể hướng dẫn user bấm đâu đó để play
   });
