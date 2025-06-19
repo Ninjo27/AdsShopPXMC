@@ -870,7 +870,7 @@ function playRandomBgMusic() {
   audio.src = bgMusics[randIndex];
   // Nếu đã có user interaction, tự động play
   audio.currentTime = 0;
-  audio.volume = 1; // Tùy chỉnh âm lượng
+  audio.volume = 0.5; // Tùy chỉnh âm lượng
   audio.play().catch(() => {
     // Một số trình duyệt cần tương tác mới play, bạn có thể hướng dẫn user bấm đâu đó để play
   });
