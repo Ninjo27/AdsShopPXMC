@@ -910,6 +910,7 @@ function filterCategory(cat) {
 }
     function showSection(section) {
   // Ẩn hết mọi section liên quan
+  document.getElementById('review-section').style.display = 'none';
   document.getElementById('shop-section').style.display = 'none';
   document.getElementById('cart-table').parentElement.parentElement.style.display = 'none';
   document.getElementById('double-section').style.display = 'none';
@@ -942,6 +943,11 @@ function filterCategory(cat) {
       document.getElementById('speciallink-section').style.display = 'block';
       document.getElementById('stats-section') && (document.getElementById('stats-section').style.display = 'block');
       document.getElementById('admin-nav-btn').classList.add('active');
+      break;
+          case 'review':
+      document.getElementById('review-section').style.display = 'block';
+      document.getElementById('review-nav-btn').classList.add('active');
+      renderReviewSection();
       break;
   }
 }
