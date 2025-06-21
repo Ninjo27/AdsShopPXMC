@@ -1031,8 +1031,8 @@ async function logAdClick() {
   let adsterra_id = user.adsterra_id || 'default_adsterra_id';
 
   const { error } = await supabase.from('ad_click_logs').insert([{
+    user_id: user.id,
     username: user.username,
-    adsterra_id: adsterra_id,
     status: 'pending'
   }]);
   if (error) {
