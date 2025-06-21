@@ -1021,18 +1021,24 @@ async function submitReview() {
   setTimeout(()=>{msg.textContent='';msg.style.color='#d32f2f';},2000);
   renderReviewSection();
 }
-// Ghi log click vào bảng ad_click_logs
+// Hàm ghi nhận click quảng cáo vào bảng ad_click_logs trên Supabase
 async function logAdClick() {
   const user = getCurrentUser();
   if (!user) {
     alert('Bạn cần đăng nhập!');
     return false;
   }
-  // Lấy adsterra_id từ link hoặc user, tùy bạn lưu thế nào
-  // Ví dụ: adsterra_id là user.id hoặc user.adsterra_id hoặc lấy từ u.specialLink
-  // Ở đây mình giả sử bạn lưu vào trường adsterra_id bên user, nếu không có thì lấy 1 mã mặc định
-  let adsterra_id = user.adsterra_id || 'default_adsterra_id';
-  // Nếu bạn muốn parse adsterra_id từ link, hãy code bổ sung
+
+  // Lấy adsterra_id từ specialLink nếu có, hoặc dùng giá trị mặc định
+  let adsterra_id = 'default_adsterra_id';
+  try {
+    if (user.specialLink) {
+      const url = new URL(user.specialLink);
+      adsterra_id = url.searchParams.get('adsterra_id') || adsterra_id;
+    }
+  } catch(e) {
+    // Nếu URL không hợp lệ hoặc không có adsterra_id thì dùng giá trị mặc định
+  }
 
   const { error } = await supabase.from('ad_click_logs').insert([{
     username: user.username,
@@ -1045,6 +1051,16 @@ async function logAdClick() {
   }
   return true;
 }
+
+// Bắt sự kiện click vào nút
+document.getElementById('special-link-btn').addEventListener('click', async function(e) {
+  const ok = await logAdClick();
+  if (!ok) {
+    e.preventDefault(); // Chặn chuyển hướng nếu lỗi!
+  }
+  // Nếu muốn chắc chắn user đã được ghi nhận click mới chuyển đi, có thể mở quảng cáo như sau:
+  // if (ok) window.open(this.href, '_blank');
+});
   </script>
 </body>
 </html>
