@@ -5,11 +5,14 @@ const ADSTERRA_API_KEY = 'e90ff5b14479f75c9e05d87a5c46136b';
 const SUPABASE_URL = 'https://ibylievcmlzzyzkihzfo.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieWxpZXZjbWx6enl6a2loemZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3OTQ4OTYsImV4cCI6MjA2NTM3MDg5Nn0.iJNGvjly4q5M43Xd5uJ8A0OZT7PSrbQWcuhas9WWEiM'; // Nên dùng service_role
 
-// Lấy ngày hôm qua ở múi giờ UTC (Adsterra dùng UTC)
-function getYesterday() {
-  const now = new Date();
-  const yesterday = new Date(now.getTime() - 86400000);
-  return yesterday.toISOString().slice(0, 10); // yyyy-mm-dd
+async function getPendingLogs() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/ad_click_logs?status=eq.pending`, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`
+    }
+  });
+  return await res.json();
 }
 
 async function getAdsterraStatsByDay(date) {
@@ -19,20 +22,21 @@ async function getAdsterraStatsByDay(date) {
   return Array.isArray(data.rows) ? data.rows : [];
 }
 
-async function getUserLinkByAdsterraId(adsterra_id) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/adsterra_links?adsterra_id=eq.${adsterra_id}`, {
+async function confirmClick(logId) {
+  // Update log status to confirmed
+  await fetch(`${SUPABASE_URL}/rest/v1/ad_click_logs?id=eq.${logId}`, {
+    method: 'PATCH',
     headers: {
       'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`
-    }
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ status: 'confirmed' })
   });
-  const arr = await res.json();
-  return arr.length ? arr[0] : null;
 }
 
 async function updateUserCoin(username, add_xu) {
-  // Cộng xu cho user trong bảng users
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}`, {
+  await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}`, {
     method: 'PATCH',
     headers: {
       'apikey': SUPABASE_KEY,
@@ -41,65 +45,46 @@ async function updateUserCoin(username, add_xu) {
     },
     body: JSON.stringify({ balance: { "+": add_xu } })
   });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Lỗi cộng xu cho user ${username}: ${err}`);
-  }
-}
-
-async function updateAdsterraLinkLog(row_id, last_update, last_views) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/adsterra_links?id=eq.${row_id}`, {
-    method: 'PATCH',
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ last_update, last_views })
-  });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Lỗi cập nhật log cho row ${row_id}: ${err}`);
-  }
 }
 
 async function main() {
-  const date = getYesterday();
-  console.log(`--- BẮT ĐẦU cộng xu cho ngày: ${date} ---`);
+  const now = new Date();
+  const date = now.toISOString().slice(0, 10);
   const stats = await getAdsterraStatsByDay(date);
 
-  for (let row of stats) {
-    const adsterra_id = row.id;
-    const views = row.views || 0;
+  // Map adsterra_id -> views
+  const viewMap = {};
+  for (const row of stats) {
+    viewMap[row.id] = row.views || 0;
+  }
 
-    const userLink = await getUserLinkByAdsterraId(adsterra_id);
-    if (!userLink) {
-      console.log(`Không tìm thấy mapping user cho link Adsterra ${adsterra_id}`);
-      continue;
-    }
+  const logs = await getPendingLogs();
 
-    if (userLink.last_update === date) {
-      console.log(`Đã cộng xu cho user ${userLink.username} hôm nay rồi.`);
-      continue;
-    }
+  for (const log of logs) {
+    // Với mỗi log, kiểm tra adsterra_id đã có view mới hay chưa
+    const adsterra_id = log.adsterra_id;
+    const views = viewMap[adsterra_id] || 0;
 
-    const last_views = userLink.last_views || 0;
-    const add_xu = Math.max(views - last_views, 0);
-
-    if (add_xu > 0) {
-      try {
-        await updateUserCoin(userLink.username, add_xu);
-        await updateAdsterraLinkLog(userLink.id, date, views);
-        console.log(`Cộng ${add_xu} xu cho user ${userLink.username} (link ${adsterra_id})`);
-      } catch (err) {
-        console.log(`Lỗi khi cộng xu cho user ${userLink.username}: ${err.message}`);
+    // Đếm số log confirmed của adsterra_id hôm nay
+    // (Bạn cần lấy số log đã xác nhận trước đó, ở đây giả sử mỗi log là 1 click)
+    // Cách đơn giản: chỉ xác nhận click mới nếu tổng số log confirmed < tổng views Adsterra
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/ad_click_logs?adsterra_id=eq.${adsterra_id}&status=eq.confirmed&created_at=gte.${date}T00:00:00`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
       }
+    });
+    const confirmedLogs = await res.json();
+    if (confirmedLogs.length < views) {
+      // Đủ điều kiện xác nhận
+      await confirmClick(log.id);
+      await updateUserCoin(log.username, 1);
+      console.log(`Cộng 1 xu cho ${log.username} (adsterra_id ${adsterra_id}), xác nhận log ${log.id}`);
     } else {
-      await updateAdsterraLinkLog(userLink.id, date, views);
-      console.log(`Không có view mới cho user ${userLink.username} (link ${adsterra_id})`);
+      // Chưa xác nhận được (view bên Adsterra chưa tăng)
+      console.log(`Chưa xác nhận được log ${log.id} cho ${log.username}`);
     }
   }
-  console.log('--- HOÀN TẤT cộng xu ---');
 }
 
-main().catch(err => console.error('Lỗi tổng:', err));
+main().catch(console.error);
