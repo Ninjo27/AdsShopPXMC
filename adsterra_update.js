@@ -8,6 +8,8 @@ const supabase = createClient(
 const ADSTERRA_API_TOKEN = process.env.ADSTERRA_API_TOKEN;
 
 async function updateStatus() {
+  console.log("🚀 Bắt đầu chạy script cập nhật xu");
+
   // 1. Lấy các adsterra_id đang pending
   const { data: pendingRows, error: pendingError } = await supabase
     .from('ad_click_logs')
@@ -15,11 +17,14 @@ async function updateStatus() {
     .eq('status', 'pending');
 
   if (pendingError) {
-    console.error('Lỗi khi lấy dữ liệu pending:', pendingError);
+    console.error('❌ Lỗi khi lấy dữ liệu pending:', pendingError);
     return;
   }
+
+  console.log("📌 Số dòng pending lấy được:", pendingRows?.length || 0);
+
   if (!pendingRows || pendingRows.length === 0) {
-    console.log('Không có dòng nào đang pending.');
+    console.log('⏹ Không có dòng nào đang pending.');
     return;
   }
 
@@ -32,15 +37,18 @@ async function updateStatus() {
 
   // Lấy thống kê từ Adsterra
   const date = new Date().toISOString().slice(0, 10);
+  console.log(`📅 Đang lấy số liệu từ Adsterra cho ngày ${date}...`);
+
   const resp = await fetch(
     `https://partner.adsterra.com/api/v2/statistics?date_from=${date}&date_to=${date}&group_by=subid`,
     { headers: { 'Api-Token': ADSTERRA_API_TOKEN } }
   );
+
   const stats = await resp.json();
-console.log("📦 Thống kê Adsterra:", stats.data);
+  console.log("📦 Dữ liệu Adsterra:", stats.data);
 
   if (!Array.isArray(stats.data)) {
-    console.error('Dữ liệu Adsterra trả về không hợp lệ:', stats);
+    console.error('❌ Dữ liệu Adsterra trả về không hợp lệ:', stats);
     return;
   }
 
@@ -55,12 +63,12 @@ console.log("📦 Thống kê Adsterra:", stats.data);
       .eq('status', 'success');
 
     if (countError) {
-      console.error('Lỗi khi đếm số success:', countError);
+      console.error('❌ Lỗi khi đếm success:', countError);
       continue;
     }
 
     const needUpdate = Math.max(0, conversionCount - (successCount || 0));
-    console.log(`Adsterra ID ${adsterra_id}: conversions=${conversionCount}, successes=${successCount}, cần update ${needUpdate} dòng.`);
+    console.log(`📊 Link ${adsterra_id}: conversions=${conversionCount}, successes=${successCount}, cần update ${needUpdate} dòng`);
 
     if (needUpdate > 0) {
       const rowsToUpdate = rows.slice(0, needUpdate);
@@ -71,19 +79,18 @@ console.log("📦 Thống kê Adsterra:", stats.data);
           .eq('id', row.id);
 
         if (updateError) {
-          console.error(`Lỗi khi cập nhật status cho row ${row.id}:`, updateError);
+          console.error(`❌ Lỗi khi cập nhật status cho dòng ${row.id}:`, updateError);
           continue;
         }
-console.log("🚀 Bắt đầu chạy script cập nhật xu");
+
         const { data: user, error: userError } = await supabase
           .from('users')
           .select('balance')
           .eq('id', row.user_id)
           .maybeSingle();
-console.log("📌 Dòng pending lấy được:", pendingRows?.length);
 
         if (userError || !user) {
-          console.error(`Không tìm thấy user hoặc lỗi user ${row.user_id}:`, userError);
+          console.error(`❌ Không tìm thấy user ${row.user_id}:`, userError);
           continue;
         }
 
@@ -93,13 +100,17 @@ console.log("📌 Dòng pending lấy được:", pendingRows?.length);
           .eq('id', row.user_id);
 
         if (balanceError) {
-          console.error(`Lỗi khi cộng xu cho user ${row.user_id}:`, balanceError);
+          console.error(`❌ Lỗi khi cộng xu cho user ${row.user_id}:`, balanceError);
         } else {
-          console.log(`✅ Cập nhật thành công cho user ${row.user_id}`);
+          console.log(`✅ Đã cộng 1 xu cho user ${row.user_id}`);
         }
       }
     }
   }
 }
+
+updateStatus().catch(err => {
+  console.error("💥 Lỗi không mong muốn:", err);
+});
 
 updateStatus();
