@@ -37,6 +37,7 @@ async function updateStatus() {
     { headers: { 'Api-Token': ADSTERRA_API_TOKEN } }
   );
   const stats = await resp.json();
+console.log("📦 Thống kê Adsterra:", stats.data);
 
   if (!Array.isArray(stats.data)) {
     console.error('Dữ liệu Adsterra trả về không hợp lệ:', stats);
@@ -73,12 +74,13 @@ async function updateStatus() {
           console.error(`Lỗi khi cập nhật status cho row ${row.id}:`, updateError);
           continue;
         }
-
+console.log("🚀 Bắt đầu chạy script cập nhật xu");
         const { data: user, error: userError } = await supabase
           .from('users')
           .select('balance')
           .eq('id', row.user_id)
           .maybeSingle();
+console.log("📌 Dòng pending lấy được:", pendingRows?.length);
 
         if (userError || !user) {
           console.error(`Không tìm thấy user hoặc lỗi user ${row.user_id}:`, userError);
