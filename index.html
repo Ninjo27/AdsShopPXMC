@@ -1042,25 +1042,6 @@ document.getElementById('special-link-btn').addEventListener('click', async func
     return false;
   }
 });
-    document.addEventListener('DOMContentLoaded', () => {
-  const adBtn = document.getElementById('special-link-btn');
-  if (!adBtn) return;
-  adBtn.addEventListener('click', async function(e) {
-    // Ghi nhận click quảng cáo trước khi mở tab mới
-    const user = getCurrentUser();
-    if (!user) return; // Không xử lý nếu chưa đăng nhập
-    // Tạo adsterra_id duy nhất (ví dụ timestamp + random)
-    const adsterra_id = 'ad_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-    // Ghi log lên Supabase
-    await supabase.from('ad_click_logs').insert([{
-      user_id: user.id,
-      adsterra_id: adsterra_id,
-      status: 'pending',
-      created_at: new Date().toISOString()
-    }]);
-    // Không chặn mở quảng cáo, tab quảng cáo vẫn hoạt động bình thường
-  });
-});
   </script>
 </body>
 </html>
