@@ -1033,7 +1033,6 @@ document.getElementById('special-link-btn').addEventListener('click', async func
 
   let { error } = await supabase.from('ad_click_logs').insert([{
     user_id: user.id,
-    username: user.username,
     adsterra_id: adsterra_id,
     status: 'pending'
   }]);
