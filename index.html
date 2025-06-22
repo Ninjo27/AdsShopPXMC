@@ -1021,6 +1021,7 @@ async function submitReview() {
   setTimeout(()=>{msg.textContent='';msg.style.color='#d32f2f';},2000);
   renderReviewSection();
 }
+
     document.addEventListener('DOMContentLoaded', () => {
   const adBtn = document.getElementById('special-link-btn');
   if (!adBtn) return;
@@ -1028,8 +1029,7 @@ async function submitReview() {
     // Ghi nhận click quảng cáo trước khi mở tab mới
     const user = getCurrentUser();
     if (!user) return; // Không xử lý nếu chưa đăng nhập
-    // Tạo adsterra_id duy nhất (ví dụ timestamp + random)
-    const adsterra_id = 'ad_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+    const adsterra_id =  (u && u.adsterra_id) ? u.adsterra_id : 'default_adsterra_id';
     // Ghi log lên Supabase
     await supabase.from('ad_click_logs').insert([{
       user_id: user.id,
