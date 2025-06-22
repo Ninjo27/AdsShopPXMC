@@ -1,16 +1,16 @@
 const { createClient } = require('@supabase/supabase-js');
 const fetch = require('node-fetch');
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
-);
-const ADSTERRA_API_TOKEN = process.env.ADSTERRA_API_TOKEN;
+// Gắn trực tiếp các giá trị tạm thời vào đây:
+const SUPABASE_URL = 'https://ibylievcmlzzyzkihzfo.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieWxpZXZjbWx6enl6a2loemZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3OTQ4OTYsImV4cCI6MjA2NTM3MDg5Nn0.iJNGvjly4q5M43Xd5uJ8A0OZT7PSrbQWcuhas9WWEiM'; // ← Thay bằng key đầy đủ của anh
+const ADSTERRA_API_TOKEN = 'd41758802c69fc5af28bec3c6f3ea4bd';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 async function updateStatus() {
   console.log("🚀 Bắt đầu chạy script cập nhật xu");
 
-  // 1. Lấy các adsterra_id đang pending
   const { data: pendingRows, error: pendingError } = await supabase
     .from('ad_click_logs')
     .select('id, user_id, adsterra_id')
@@ -28,14 +28,12 @@ async function updateStatus() {
     return;
   }
 
-  // Gom nhóm theo adsterra_id
   const adsterraIdMap = {};
   pendingRows.forEach(row => {
     if (!adsterraIdMap[row.adsterra_id]) adsterraIdMap[row.adsterra_id] = [];
     adsterraIdMap[row.adsterra_id].push(row);
   });
 
-  // Lấy thống kê từ Adsterra
   const date = new Date().toISOString().slice(0, 10);
   console.log(`📅 Đang lấy số liệu từ Adsterra cho ngày ${date}...`);
 
@@ -112,5 +110,3 @@ async function updateStatus() {
 updateStatus().catch(err => {
   console.error("💥 Lỗi không mong muốn:", err);
 });
-
-updateStatus();
