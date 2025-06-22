@@ -1021,35 +1021,27 @@ async function submitReview() {
   setTimeout(()=>{msg.textContent='';msg.style.color='#d32f2f';},2000);
   renderReviewSection();
 }
-async function logAdClick() {
+document.getElementById('special-link-btn').addEventListener('click', async function(e) {
   const user = getCurrentUser();
   if (!user) {
     alert('Bạn cần đăng nhập!');
+    e.preventDefault();
     return false;
   }
-  // Lấy adsterra_id từ trường user.adsterra_id
-  let adsterra_id = user.adsterra_id || 'default_adsterra_id';
+  let { data: u } = await supabase.from('users').select('adsterra_id').eq('id', user.id).maybeSingle();
+  let adsterra_id = (u && u.adsterra_id) ? u.adsterra_id : 'default_adsterra_id';
 
-  const { error } = await supabase.from('ad_click_logs').insert([{
+  let { error } = await supabase.from('ad_click_logs').insert([{
     user_id: user.id,
     username: user.username,
+    adsterra_id: adsterra_id,
     status: 'pending'
   }]);
   if (error) {
     alert('Lỗi ghi nhận click quảng cáo!');
+    e.preventDefault();
     return false;
   }
-  return true;
-}
-
-// Bắt sự kiện click vào nút
-document.getElementById('special-link-btn').addEventListener('click', async function(e) {
-  const ok = await logAdClick();
-  if (!ok) {
-    e.preventDefault(); // Chặn chuyển hướng nếu lỗi!
-  }
-  // Nếu muốn chắc chắn user đã được ghi nhận click mới chuyển đi, có thể mở quảng cáo như sau:
-  // if (ok) window.open(this.href, '_blank');
 });
   </script>
 </body>
