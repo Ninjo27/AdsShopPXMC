@@ -308,7 +308,11 @@
   <div id="review-list"></div>
 </div>
   <script>
-  
+    // Cấu hình Supabase
+    const supabaseUrl = 'https://ibylievcmlzzyzkihzfo.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlieWxpZXZjbWx6enl6a2loemZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3OTQ4OTYsImV4cCI6MjA2NTM3MDg5Nn0.iJNGvjly4q5M43Xd5uJ8A0OZT7PSrbQWcuhas9WWEiM';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
     // Quản lý trạng thái user
     function getCurrentUser() {
       const userStr = sessionStorage.getItem('currentUser');
