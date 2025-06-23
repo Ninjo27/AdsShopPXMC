@@ -251,7 +251,6 @@
       <input type="number" id="add-balance" placeholder="Số Xu muốn cấp" min="1">
       <button onclick="addBalance()">Cấp Xu</button>
       <div class="msg" id="admin-msg"></div>
-      <button id="updateXuBtn" onclick="syncXu()">🔄 Cập nhật xu</button>
     </div>
 
     <!-- Admin: Điều chỉnh tồn kho -->
@@ -1022,102 +1021,6 @@ async function submitReview() {
   setTimeout(()=>{msg.textContent='';msg.style.color='#d32f2f';},2000);
   renderReviewSection();
 }
-document.getElementById('special-link-btn').addEventListener('click', async function(e) {
-  const user = getCurrentUser();
-  if (!user) {
-    alert('Bạn cần đăng nhập!');
-    e.preventDefault();
-    return false;
-  }
-  let { data: u } = await supabase.from('users').select('adsterra_id').eq('id', user.id).maybeSingle();
-  let adsterra_id = (u && u.adsterra_id) ? u.adsterra_id : 'default_adsterra_id';
-
-  let { error } = await supabase.from('ad_click_logs').insert([{
-    user_id: user.id,
-    adsterra_id: adsterra_id,
-    status: 'pending'
-  }]);
-  if (error) {
-    alert('Lỗi ghi nhận click quảng cáo!');
-    e.preventDefault();
-    return false;
-  }
-});
-     const ADSTERRA_API_TOKEN = 'd41758802c69fc5af28bec3c6f3ea4bd';
-
-  async function updateStatus() {
-    console.log("🚀 Đang chạy updateStatus()");
-
-    const { data: pendingRows, error } = await supabase
-      .from('ad_click_logs')
-      .select('id, user_id, adsterra_id')
-      .eq('status', 'pending');
-
-    if (error || !pendingRows || pendingRows.length === 0) {
-      console.log("⏹ Không có dòng nào pending.");
-      return;
-    }
-
-    const group = {};
-    pendingRows.forEach(r => {
-      (group[r.adsterra_id] = group[r.adsterra_id] || []).push(r);
-    });
-
-    const date = new Date().toISOString().slice(0, 10);
-    let stats;
-    try {
-      const res = await fetch(`https://partner.adsterra.com/api/v2/statistics?date_from=${date}&date_to=${date}&group_by=subid`, {
-        headers: { 'Api-Token': ADSTERRA_API_TOKEN }
-      });
-      stats = await res.json();
-    } catch (e) {
-      console.error("❌ Lỗi fetch Adsterra:", e);
-      return;
-    }
-
-    if (!Array.isArray(stats.data)) {
-      console.error("❌ stats.data không hợp lệ:", stats);
-      return;
-    }
-
-    for (const [adid, rows] of Object.entries(group)) {
-      const match = stats.data.find(s => s.subid === adid);
-      const conversions = match ? Number(match.conversions) : 0;
-
-      const { count: successCount } = await supabase
-        .from('ad_click_logs')
-        .select('*', { count: 'exact', head: true })
-        .eq('adsterra_id', adid)
-        .eq('status', 'success');
-
-      const needUpdate = Math.max(0, conversions - (successCount || 0));
-      console.log(`🔄 ${adid}: conv=${conversions}, success=${successCount}, cập nhật ${needUpdate} dòng`);
-
-      for (let i = 0; i < needUpdate; i++) {
-        const row = rows[i];
-        await supabase.from('ad_click_logs').update({ status: 'success' }).eq('id', row.id);
-
-        const { data: user } = await supabase
-          .from('users')
-          .select('balance')
-          .eq('id', row.user_id)
-          .maybeSingle();
-
-        if (!user) continue;
-
-        await supabase
-          .from('users')
-          .update({ balance: user.balance + 1 })
-          .eq('id', row.user_id);
-
-        console.log(`✅ Cộng 1 xu cho user ${row.user_id}`);
-      }
-    }
-  }
-
-  // Gọi ngay & lặp lại mỗi 5 phút
-  updateStatus();
-  setInterval(updateStatus, 5 * 60 * 1000);
   </script>
 </body>
 </html>
