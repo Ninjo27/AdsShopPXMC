@@ -1,0 +1,28 @@
+name: Sync Xu Hằng Ngày
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # chạy lúc 2h sáng UTC mỗi ngày
+  workflow_dispatch:      # cho phép chạy thủ công
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v3
+
+      - name: Cài Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Cài requests
+        run: pip install requests
+
+      - name: Chạy script cộng xu
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          ADSTERRA_TOKEN: ${{ secrets.ADSTERRA_TOKEN }}
+        run: python scripts/sync_xu.py
